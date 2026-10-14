@@ -14,6 +14,17 @@ const MANAGED_TABLES = [
   'verification_tokens',
 ];
 
+const MANAGED_ENUM_TYPES = ['verification_tokens_type_enum'];
+
+async function resetSchema(dataSource: DataSource): Promise<void> {
+  for (const table of [...MANAGED_TABLES, 'migrations']) {
+    await dataSource.query(`DROP TABLE IF EXISTS "${table}" CASCADE`);
+  }
+  for (const enumType of MANAGED_ENUM_TYPES) {
+    await dataSource.query(`DROP TYPE IF EXISTS "${enumType}" CASCADE`);
+  }
+}
+
 describe('Database migrations (integration)', () => {
   let dataSource: DataSource;
 
@@ -31,19 +42,20 @@ describe('Database migrations (integration)', () => {
 
     await dataSource.initialize();
 
-    await Promise.all([
-      ...MANAGED_TABLES.map((table) =>
-        dataSource.query(`DROP TABLE IF EXISTS "${table}" CASCADE`),
-      ),
-      dataSource.query(`DROP TABLE IF EXISTS "migrations" CASCADE`),
-    ]);
+    await resetSchema(dataSource);
   });
 
   afterAll(async () => {
-    // The second test undoes the last migration, leaving token tables missing.
-    // Re-apply so the shared DB is fully migrated when subsequent suites run.
-    await dataSource.runMigrations();
-    await dataSource.destroy();
+    if (!dataSource?.isInitialized) return;
+    try {
+      // The second test undoes the last migration, leaving token tables missing.
+      // Start from a clean schema and re-apply so the shared DB is fully
+      // migrated when subsequent suites run.
+      await resetSchema(dataSource);
+      await dataSource.runMigrations();
+    } finally {
+      await dataSource.destroy();
+    }
   });
 
   it('should apply all migrations and create all four tables', async () => {
