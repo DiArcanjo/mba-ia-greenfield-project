@@ -1,7 +1,7 @@
 # phase-03-videos — Progress
 
 **Status:** in_progress
-**SIs:** 2/24 completed
+**SIs:** 3/24 completed
 
 ### SI-03.1 — Infra: MinIO, Redis, worker e FFmpeg no Docker Compose
 - **Status:** completed
@@ -24,9 +24,12 @@
 - **Observations:** none
 
 ### SI-03.4 — Entidade Video, migration e VideosModule base
-- **Status:** pending
-- **Tests:** -
-- **Observations:** none
+- **Status:** completed
+- **Tests:** 6 entity integration + 1 module unit + migrations spec (updated, 3 migrations, revert/reapply of videos); full suite 157 passing, e2e 52 passing, tsc clean, lint 0 errors
+- **Observations:**
+  - `Video` added to the `ALL_ENTITIES` arrays of existing specs (the new `Channel.videos` relation requires it in every test DataSource).
+  - `VideosModule` imported in `AppModule` so the entity is auto-loaded.
+  - `Video` entity has no `@Index` on `public_id` besides the unique constraint (the unique already indexes it).
 
 ### SI-03.5 — Gerador de id público do vídeo
 - **Status:** pending
