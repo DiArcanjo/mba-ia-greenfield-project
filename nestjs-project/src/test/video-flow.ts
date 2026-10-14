@@ -8,6 +8,7 @@ import { AuthService } from '../auth/auth.service';
 import { DomainExceptionFilter } from '../common/filters/domain-exception.filter';
 import { ValidationExceptionFilter } from '../common/filters/validation-exception.filter';
 import type { MailService } from '../mail/mail.service';
+import { generateTestVideo } from './generate-test-video';
 import { uploadPartViaPresignedUrl } from './storage';
 
 export type TestApp = INestApplication<App>;
@@ -176,4 +177,25 @@ export async function waitForProcessing(
   throw new Error(
     `Video ${publicId} did not finish processing in ${timeoutMs}ms`,
   );
+}
+
+/** Uploads a generated 2s MP4 and waits for the real worker to make it ready. */
+export async function createReadyVideo(
+  app: TestApp,
+  user: TestUser,
+  filename = 'clip.mp4',
+): Promise<{ publicId: string; size: number; filename: string }> {
+  const content = await generateTestVideo();
+  const session = await initiateUpload(app, user, {
+    filename,
+    contentType: 'video/mp4',
+    size: content.length,
+  });
+  const parts = await uploadAllParts(app, user, session, content);
+  await completeUpload(app, user, session.publicId, parts).expect(202);
+  const video = await waitForProcessing(app, user, session.publicId);
+  if (video.processingStatus !== 'ready') {
+    throw new Error(`Video ended ${String(video.processingStatus)}`);
+  }
+  return { publicId: session.publicId, size: content.length, filename };
 }

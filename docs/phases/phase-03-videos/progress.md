@@ -108,9 +108,11 @@
   - Scenario 1.2 (returns-metadata-when-ready) runs VideoProcessingService.process directly (idempotent, same service the worker will use) instead of waiting for a worker, because the video-worker entrypoint only exists from SI-03.22; waitForProcessing then confirms the ready state through the API. Once the worker is up this still passes (process() ignores non-processing videos); SI-03.23 covers the real worker path.
 
 ### SI-03.17 — Endpoint GET /videos/:publicId/stream
-- **Status:** pending
-- **Tests:** -
-- **Observations:** none
+- **Status:** completed
+- **Tests:** 4 e2e passing (test/videos-stream.e2e-spec.ts, real worker + MinIO, Range → 206); unit suite 266 passing; e2e green; tsc clean; lint 0 errors
+- **Observations:**
+  - Added createReadyVideo helper to src/test/video-flow.ts (uploads a generated MP4 and waits for the real compose worker); scenarios 1.1 and 1.2 of the spec are merged in one test since the Range request needs the Location from the redirect.
+  - From here on the e2e suite depends on the compose video-worker being up.
 
 ### SI-03.18 — Endpoint GET /videos/:publicId/download
 - **Status:** pending

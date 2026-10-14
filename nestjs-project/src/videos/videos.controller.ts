@@ -1,4 +1,4 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param, Redirect } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -10,12 +10,16 @@ import type { JwtPayload } from '../auth/auth.types';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { ApiErrorEnvelope } from '../common/openapi/api-error-envelope.dto';
 import { VideoResponseDto } from './dto/video-response.dto';
+import { VideoDeliveryService } from './video-delivery.service';
 import { VideosService } from './videos.service';
 
 @ApiTags('videos')
 @Controller('videos')
 export class VideosController {
-  constructor(private readonly videosService: VideosService) {}
+  constructor(
+    private readonly videosService: VideosService,
+    private readonly videoDeliveryService: VideoDeliveryService,
+  ) {}
 
   @Get(':publicId')
   @ApiBearerAuth('access-token')
@@ -46,5 +50,42 @@ export class VideosController {
     return VideoResponseDto.from(
       await this.videosService.findOwnedByPublicId(publicId, user.sub),
     );
+  }
+
+  @Get(':publicId/stream')
+  @Redirect()
+  @ApiBearerAuth('access-token')
+  @ApiOperation({
+    summary: 'Stream a video',
+    description:
+      'Authorizes the owner and redirects to a presigned storage URL that serves HTTP Range requests (206) for playback.',
+  })
+  @ApiResponse({
+    status: 302,
+    description: 'Redirect to the presigned storage URL (Location header)',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Missing or invalid access token',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Video not found or owned by another user',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Video is not ready yet',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  async stream(
+    @CurrentUser() user: JwtPayload,
+    @Param('publicId') publicId: string,
+  ): Promise<{ url: string; statusCode: number }> {
+    return {
+      url: await this.videoDeliveryService.getStreamUrl(user.sub, publicId),
+      statusCode: 302,
+    };
   }
 }
