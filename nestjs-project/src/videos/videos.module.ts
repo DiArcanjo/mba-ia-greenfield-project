@@ -9,6 +9,7 @@ import { VideoUploadsController } from './video-uploads.controller';
 import { VideoDeliveryService } from './video-delivery.service';
 import { VideoProcessingProducer } from './video-processing.producer';
 import { VideoUploadsService } from './video-uploads.service';
+import { VideosController } from './videos.controller';
 import { VideosService } from './videos.service';
 
 @Module({
@@ -18,7 +19,7 @@ import { VideosService } from './videos.service';
     TypeOrmModule.forFeature([Video]),
     BullModule.registerQueue({ name: VIDEO_PROCESSING_QUEUE }),
   ],
-  controllers: [VideoUploadsController],
+  controllers: [VideoUploadsController, VideosController],
   providers: [
     VideoDeliveryService,
     VideoProcessingProducer,

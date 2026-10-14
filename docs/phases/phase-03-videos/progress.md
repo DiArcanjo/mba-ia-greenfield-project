@@ -1,7 +1,7 @@
 # phase-03-videos — Progress
 
 **Status:** in_progress
-**SIs:** 18/24 completed
+**SIs:** 19/24 completed
 
 ### SI-03.1 — Infra: MinIO, Redis, worker e FFmpeg no Docker Compose
 - **Status:** completed
@@ -102,9 +102,10 @@
 - **Observations:** none
 
 ### SI-03.16 — Endpoint GET /videos/:publicId
-- **Status:** pending
-- **Tests:** -
-- **Observations:** none
+- **Status:** completed
+- **Tests:** 5 e2e passing (test/videos-get.e2e-spec.ts); unit suite 261 passing, e2e 80 passing; tsc clean; lint 0 errors
+- **Observations:**
+  - Scenario 1.2 (returns-metadata-when-ready) runs VideoProcessingService.process directly (idempotent, same service the worker will use) instead of waiting for a worker, because the video-worker entrypoint only exists from SI-03.22; waitForProcessing then confirms the ready state through the API. Once the worker is up this still passes (process() ignores non-processing videos); SI-03.23 covers the real worker path.
 
 ### SI-03.17 — Endpoint GET /videos/:publicId/stream
 - **Status:** pending
