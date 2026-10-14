@@ -1,7 +1,7 @@
 # phase-03-videos — Progress
 
 **Status:** in_progress
-**SIs:** 14/24 completed
+**SIs:** 15/24 completed
 
 ### SI-03.1 — Infra: MinIO, Redis, worker e FFmpeg no Docker Compose
 - **Status:** completed
@@ -121,8 +121,8 @@
 - **Observations:** none
 
 ### SI-03.21 — VideoProcessingService: metadados e thumbnail
-- **Status:** pending
-- **Tests:** -
+- **Status:** completed
+- **Tests:** 11 passing (7 unit service, 1 module, 3 integration with PostgreSQL+MinIO+ffmpeg); full suite green; tsc clean; lint 0 errors
 - **Observations:** none
 
 ### SI-03.22 — Worker de vídeo: processor BullMQ, retry/falha e entrypoint separado
