@@ -1,7 +1,7 @@
 # phase-03-videos — Progress
 
 **Status:** in_progress
-**SIs:** 15/24 completed
+**SIs:** 16/24 completed
 
 ### SI-03.1 — Infra: MinIO, Redis, worker e FFmpeg no Docker Compose
 - **Status:** completed
@@ -76,9 +76,11 @@
   - Added --runInBand to the test:e2e script: e2e suites share one database and run in parallel by default, which made suites collide as soon as a 4th e2e file existed (project CLAUDE.md requires --runInBand).
 
 ### SI-03.12 — Endpoint POST /videos/:publicId/upload/parts
-- **Status:** pending
-- **Tests:** -
-- **Observations:** none
+- **Status:** completed
+- **Tests:** 6 e2e passing (test/videos-upload-parts.e2e-spec.ts); unit suite 261 passing, e2e 63 passing; tsc clean; lint 0 errors
+- **Observations:**
+  - Scenario 1.5 (rejects-video-in-processing) puts the video in 'processing' with a direct UPDATE instead of the upload+complete flow, because POST .../upload/complete is only implemented in SI-03.14; the asserted behavior (409 INVALID_UPLOAD_STATE) is identical. Could be switched to the helper flow later.
+  - Changed video-flow.completeUpload to return a supertest Test (chainable .expect).
 
 ### SI-03.13 — Endpoint GET /videos/:publicId/upload
 - **Status:** pending

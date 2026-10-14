@@ -139,12 +139,12 @@ export async function uploadAllParts(
   return completed;
 }
 
-export async function completeUpload(
+export function completeUpload(
   app: TestApp,
   user: TestUser,
   publicId: string,
   parts: CompletedPart[],
-): Promise<request.Response> {
+): request.Test {
   return request(app.getHttpServer())
     .post(`/videos/${publicId}/upload/complete`)
     .set(authHeader(user))
