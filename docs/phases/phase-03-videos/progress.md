@@ -1,7 +1,7 @@
 # phase-03-videos — Progress
 
 **Status:** in_progress
-**SIs:** 4/24 completed
+**SIs:** 5/24 completed
 
 ### SI-03.1 — Infra: MinIO, Redis, worker e FFmpeg no Docker Compose
 - **Status:** completed
@@ -37,8 +37,8 @@
 - **Observations:** none
 
 ### SI-03.6 — Exceções de domínio de vídeo e busca de canal por usuário
-- **Status:** pending
-- **Tests:** -
+- **Status:** completed
+- **Tests:** 7 new filter cases + 2 findByUserId integration; src/common|channels|videos 52 passing; tsc clean; lint 0 errors
 - **Observations:** none
 
 ### SI-03.7 — QueueModule e producer da fila de processamento

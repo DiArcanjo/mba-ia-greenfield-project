@@ -90,4 +90,27 @@ describe('ChannelsService (integration)', () => {
       expect(channels).toHaveLength(2);
     });
   });
+
+  describe('findByUserId', () => {
+    it('returns the channel of a user that has one', async () => {
+      const user = await createUser();
+      const created = await channelsService.createChannel(
+        user.id,
+        'finder@example.com',
+      );
+
+      const found = await channelsService.findByUserId(user.id);
+
+      expect(found).not.toBeNull();
+      expect(found!.id).toBe(created.id);
+    });
+
+    it('returns null for a user without a channel', async () => {
+      const user = await createUser();
+
+      const found = await channelsService.findByUserId(user.id);
+
+      expect(found).toBeNull();
+    });
+  });
 });
