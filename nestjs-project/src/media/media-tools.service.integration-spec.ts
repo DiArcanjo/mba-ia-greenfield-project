@@ -1,4 +1,4 @@
-import { randomBytes, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { ConfigModule } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 import storageConfig from '../config/storage.config';
@@ -34,7 +34,7 @@ describe('MediaToolsService (integration, ffmpeg + MinIO)', () => {
     );
     await storage.putObject(
       `${prefix}/invalid`,
-      randomBytes(4096),
+      Buffer.from('this is definitely not a video file '.repeat(200)),
       'video/mp4',
     );
     videoUrl = await storage.presignGetObject(`${prefix}/valid`, {

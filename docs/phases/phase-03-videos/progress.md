@@ -118,7 +118,8 @@
 ### SI-03.20 — MediaModule: ffprobe e ffmpeg sobre URL pré-assinada
 - **Status:** completed
 - **Tests:** 5 passing (4 integration with real ffprobe/ffmpeg + MinIO, 1 module unit); full suite green; tsc clean; lint 0 errors
-- **Observations:** none
+- **Observations:**
+  - Found while running SI-03.21's full suite: the SI-03.20 integration test used random bytes as the "not a video" object, and ffprobe sometimes sniffs them as MP3 (`Failed to read frame size`), which was classified retryable. Fixed in the SI-03.21 commit: deterministic non-video text in the test and `Failed to read frame size` added to the non-retryable patterns in `media.constants.ts`.
 
 ### SI-03.21 — VideoProcessingService: metadados e thumbnail
 - **Status:** completed

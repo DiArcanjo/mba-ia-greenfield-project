@@ -21,4 +21,6 @@ export const INVALID_MEDIA_PATTERNS = [
   'Invalid data found',
   'moov atom not found',
   'could not find codec parameters',
+  // Random bytes can be sniffed as MP3 and fail inside the demuxer.
+  'Failed to read frame size',
 ] as const;
