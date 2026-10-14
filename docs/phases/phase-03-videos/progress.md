@@ -1,7 +1,7 @@
 # phase-03-videos — Progress
 
 **Status:** in_progress
-**SIs:** 17/24 completed
+**SIs:** 18/24 completed
 
 ### SI-03.1 — Infra: MinIO, Redis, worker e FFmpeg no Docker Compose
 - **Status:** completed
@@ -89,9 +89,12 @@
   - Scenario 1.3 (rejects-video-in-processing) also drives the processing state via a direct UPDATE until SI-03.14 exists (same as SI-03.12).
 
 ### SI-03.14 — Endpoint POST /videos/:publicId/upload/complete
-- **Status:** pending
-- **Tests:** -
-- **Observations:** none
+- **Status:** completed
+- **Tests:** 7 e2e passing (test/videos-upload-complete.e2e-spec.ts); unit suite 261 passing, e2e 75 passing; tsc clean; lint 0 errors
+- **Observations:**
+  - Scenario 1.1 accepts processing
+  - ready
+  - failed in the 202 body: the video-worker entrypoint does not exist until SI-03.22, and the test uploads zero bytes (not a valid video), so only the 202 contract is asserted here; end-to-end processing is covered by SI-03.23.
 
 ### SI-03.15 — VideoDeliveryService: URLs de streaming, download e thumbnail
 - **Status:** completed

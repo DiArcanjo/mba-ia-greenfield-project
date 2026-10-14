@@ -9,10 +9,12 @@ import {
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { JwtPayload } from '../auth/auth.types';
 import { ApiErrorEnvelope } from '../common/openapi/api-error-envelope.dto';
+import { CompleteUploadDto } from './dto/complete-upload.dto';
 import { InitiateUploadDto } from './dto/initiate-upload.dto';
 import { PresignPartsDto } from './dto/presign-parts.dto';
 import {
   PresignedPartsResponseDto,
+  UploadAcceptedResponseDto,
   UploadedPartsResponseDto,
 } from './dto/upload-parts-response.dto';
 import { UploadSessionResponseDto } from './dto/upload-session-response.dto';
@@ -140,5 +142,51 @@ export class VideoUploadsController {
     @Param('publicId') publicId: string,
   ): Promise<UploadedPartsResponseDto> {
     return this.videoUploadsService.listUploadedParts(user.sub, publicId);
+  }
+
+  @Post(':publicId/upload/complete')
+  @HttpCode(202)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({
+    summary: 'Complete a video upload',
+    description:
+      'Finalizes the multipart upload, verifies the stored object size, moves the video to processing and enqueues the background processing. Idempotent: repeating the call returns the current status.',
+  })
+  @ApiResponse({
+    status: 202,
+    description: 'Upload accepted; processing continues in the background',
+    type: UploadAcceptedResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation failed or the parts do not match the part count',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Missing or invalid access token',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Video not found or owned by another user',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Video is in the failed state',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  @ApiResponse({
+    status: 422,
+    description: 'Stored object size differs from the declared size',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  completeUpload(
+    @CurrentUser() user: JwtPayload,
+    @Param('publicId') publicId: string,
+    @Body() dto: CompleteUploadDto,
+  ): Promise<UploadAcceptedResponseDto> {
+    return this.videoUploadsService.complete(user.sub, publicId, dto.parts);
   }
 }
