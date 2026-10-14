@@ -47,6 +47,7 @@ _Subprojects in scope:_
 **Recommendation:** **Option A (BullMQ)** — best Nest fit (`@nestjs/bullmq` + `WorkerHost`) with the exact semantics Phase 03 needs (attempts/backoff, `UnrecoverableError`, stalled detection); Redis is a small, common addition to `compose.yaml`. Option B is a legitimate runner-up if you prefer to avoid a new service — the trade is custom integration code for transactional enqueueing.
 
 **Decision:** A (BullMQ on Redis via `@nestjs/bullmq`)
+**Libraries:** @nestjs/bullmq, bullmq
 
 ---
 
@@ -78,6 +79,9 @@ _Subprojects in scope:_
 **Recommendation:** **Option A (S3 multipart + presigned part URLs)** — meets the 10GB and resume requirements with the project's already-chosen S3/MinIO, keeps bytes off the API, and adds no service. Accept the cost of ~one small frontend upload module and an abandoned-upload cleanup policy (TD-08).
 
 **Decision:** A (S3 multipart upload with presigned `UploadPart` URLs)
+**Libraries:** @aws-sdk/client-s3, @aws-sdk/s3-request-presigner
+**Revisions:**
+- 2026-10-14 — Phase 03 is backend-only (nestjs-project); the frontend multipart upload client is deferred to a later frontend phase/task. The handshake contract (initiate, presign parts, complete) is delivered by the API and exercised in backend e2e tests that PUT parts directly to MinIO. Rationale: scope clarified (AMB-1).
 
 ---
 
