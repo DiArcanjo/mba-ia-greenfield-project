@@ -1,7 +1,7 @@
 # phase-03-videos — Progress
 
 **Status:** in_progress
-**SIs:** 5/24 completed
+**SIs:** 6/24 completed
 
 ### SI-03.1 — Infra: MinIO, Redis, worker e FFmpeg no Docker Compose
 - **Status:** completed
@@ -19,9 +19,11 @@
   - `.env` (gitignored) updated with all new vars; `MINIO_ROOT_*` also added to `.env.example`.
 
 ### SI-03.3 — StorageModule: cliente S3/MinIO e operações de objeto
-- **Status:** pending
-- **Tests:** -
-- **Observations:** none
+- **Status:** completed
+- **Tests:** 7 passing (6 integration against real MinIO + 1 module unit); tsc clean; lint 0 errors
+- **Observations:**
+  - S3 clients are created with `requestChecksumCalculation/responseChecksumValidation: 'WHEN_REQUIRED'` so presigned UploadPart URLs carry no flexible-checksum params and work with plain HTTP PUTs (SDK v3 default would add them).
+  - `listParts` of an aborted upload rejects (NoSuchUpload); tested accordingly.
 
 ### SI-03.4 — Entidade Video, migration e VideosModule base
 - **Status:** completed
