@@ -1,7 +1,7 @@
 # phase-03-videos — Progress
 
 **Status:** in_progress
-**SIs:** 11/24 completed
+**SIs:** 12/24 completed
 
 ### SI-03.1 — Infra: MinIO, Redis, worker e FFmpeg no Docker Compose
 - **Status:** completed
@@ -89,8 +89,8 @@
 - **Observations:** none
 
 ### SI-03.15 — VideoDeliveryService: URLs de streaming, download e thumbnail
-- **Status:** pending
-- **Tests:** -
+- **Status:** completed
+- **Tests:** 14 passing (8 unit + 6 integration vs PostgreSQL+MinIO); full suite green; tsc clean; lint 0 errors
 - **Observations:** none
 
 ### SI-03.16 — Endpoint GET /videos/:publicId
