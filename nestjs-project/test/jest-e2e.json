@@ -1,9 +1,5 @@
 {
-  "moduleFileExtensions": [
-    "js",
-    "json",
-    "ts"
-  ],
+  "moduleFileExtensions": ["js", "json", "ts"],
   "rootDir": ".",
   "testEnvironment": "node",
   "testRegex": ".e2e-spec.ts$",
@@ -23,10 +19,6 @@
       }
     ]
   },
-  "setupFiles": [
-    "dotenv/config"
-  ],
-  "transformIgnorePatterns": [
-    "/node_modules/(?!@nestjs/(bullmq|bull-shared)/)"
-  ]
+  "setupFiles": ["dotenv/config"],
+  "transformIgnorePatterns": ["/node_modules/(?!@nestjs/(bullmq|bull-shared)/)"]
 }

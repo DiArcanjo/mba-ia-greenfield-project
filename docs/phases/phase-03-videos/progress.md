@@ -1,7 +1,7 @@
 # phase-03-videos — Progress
 
 **Status:** in_progress
-**SIs:** 13/24 completed
+**SIs:** 14/24 completed
 
 ### SI-03.1 — Infra: MinIO, Redis, worker e FFmpeg no Docker Compose
 - **Status:** completed
@@ -69,9 +69,11 @@
 - **Observations:** none
 
 ### SI-03.11 — Endpoint POST /videos
-- **Status:** pending
-- **Tests:** -
-- **Observations:** none
+- **Status:** completed
+- **Tests:** 5 e2e passing (test/videos-initiate-upload.e2e-spec.ts, authored from specs/videos-initiate-upload.plan.md); unit suite 248 passing, e2e 57 passing; tsc clean; lint 0 errors
+- **Observations:**
+  - Created src/test/video-flow.ts (app bootstrap, register/login, initiate/upload/complete/wait helpers) earlier than SI-03.23 because the endpoint e2e specs of SI-03.11..19 depend on it; SI-03.23 should extend it rather than recreate it.
+  - Added --runInBand to the test:e2e script: e2e suites share one database and run in parallel by default, which made suites collide as soon as a 4th e2e file existed (project CLAUDE.md requires --runInBand).
 
 ### SI-03.12 — Endpoint POST /videos/:publicId/upload/parts
 - **Status:** pending
