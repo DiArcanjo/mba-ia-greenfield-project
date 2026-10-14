@@ -1,0 +1,24 @@
+export const FFPROBE_BIN = 'ffprobe';
+export const FFMPEG_BIN = 'ffmpeg';
+
+export const FFPROBE_TIMEOUT_MS = 60_000;
+export const FFMPEG_TIMEOUT_MS = 120_000;
+
+export const FFPROBE_ARGS = [
+  '-v',
+  'error',
+  '-print_format',
+  'json',
+  '-show_format',
+  '-show_streams',
+] as const;
+
+export const THUMBNAIL_WIDTH = 640;
+export const MAX_STDERR_LENGTH = 1000;
+
+/** ffprobe/ffmpeg stderr fragments that mean the input is not valid media. */
+export const INVALID_MEDIA_PATTERNS = [
+  'Invalid data found',
+  'moov atom not found',
+  'could not find codec parameters',
+] as const;

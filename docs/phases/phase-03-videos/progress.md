@@ -1,7 +1,7 @@
 # phase-03-videos — Progress
 
 **Status:** in_progress
-**SIs:** 10/24 completed
+**SIs:** 11/24 completed
 
 ### SI-03.1 — Infra: MinIO, Redis, worker e FFmpeg no Docker Compose
 - **Status:** completed
@@ -114,8 +114,8 @@
 - **Observations:** none
 
 ### SI-03.20 — MediaModule: ffprobe e ffmpeg sobre URL pré-assinada
-- **Status:** pending
-- **Tests:** -
+- **Status:** completed
+- **Tests:** 5 passing (4 integration with real ffprobe/ffmpeg + MinIO, 1 module unit); full suite green; tsc clean; lint 0 errors
 - **Observations:** none
 
 ### SI-03.21 — VideoProcessingService: metadados e thumbnail
