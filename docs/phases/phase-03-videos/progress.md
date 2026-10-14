@@ -1,7 +1,7 @@
 # phase-03-videos — Progress
 
 **Status:** in_progress
-**SIs:** 6/24 completed
+**SIs:** 7/24 completed
 
 ### SI-03.1 — Infra: MinIO, Redis, worker e FFmpeg no Docker Compose
 - **Status:** completed
@@ -44,9 +44,12 @@
 - **Observations:** none
 
 ### SI-03.7 — QueueModule e producer da fila de processamento
-- **Status:** pending
-- **Tests:** -
-- **Observations:** none
+- **Status:** completed
+- **Tests:** 4 new (3 producer integration vs real Redis + 1 QueueModule unit); full suite 180 passing, e2e 52 passing; tsc clean; lint 0 errors
+- **Observations:**
+  - `@nestjs/bullmq@12` and `@nestjs/bull-shared` are ESM-only (`"type": "module"`), which Jest (CommonJS) cannot load. Added a ts-jest transform for those two packages plus `transformIgnorePatterns` to `package.json` (jest) and `test/jest-e2e.json`. Runtime under Nest build (CJS on Node 25) must be re-checked in SI-03.22 (`npm run build` + worker entrypoint).
+  - `bullmq@6` no longer bundles Redis client: `ioredis@^5.11.1` installed (optional peer, required at runtime; the plan did not list it).
+  - `VideosModule` now needs `ConfigModule` (global) + `QueueModule` in any test module; `videos.module.spec.ts` updated.
 
 ### SI-03.8 — VideosService: posse, transições de status e DTO de resposta
 - **Status:** pending

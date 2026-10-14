@@ -12,6 +12,7 @@ import queueConfig from './config/queue.config';
 import storageConfig from './config/storage.config';
 import swaggerConfig from './config/swagger.config';
 import videoConfig from './config/video.config';
+import { QueueModule } from './queue/queue.module';
 import { VideosModule } from './videos/videos.module';
 import { envValidationSchema } from './config/env.validation';
 
@@ -46,6 +47,7 @@ import { envValidationSchema } from './config/env.validation';
         synchronize: false,
       }),
     }),
+    QueueModule,
     AuthModule,
     VideosModule,
   ],
