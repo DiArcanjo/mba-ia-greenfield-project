@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, Post } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -11,7 +11,10 @@ import type { JwtPayload } from '../auth/auth.types';
 import { ApiErrorEnvelope } from '../common/openapi/api-error-envelope.dto';
 import { InitiateUploadDto } from './dto/initiate-upload.dto';
 import { PresignPartsDto } from './dto/presign-parts.dto';
-import { PresignedPartsResponseDto } from './dto/upload-parts-response.dto';
+import {
+  PresignedPartsResponseDto,
+  UploadedPartsResponseDto,
+} from './dto/upload-parts-response.dto';
 import { UploadSessionResponseDto } from './dto/upload-session-response.dto';
 import { VideoUploadsService } from './video-uploads.service';
 
@@ -103,5 +106,39 @@ export class VideoUploadsController {
       publicId,
       dto.partNumbers,
     );
+  }
+
+  @Get(':publicId/upload')
+  @ApiBearerAuth('access-token')
+  @ApiOperation({
+    summary: 'List uploaded parts',
+    description:
+      'Returns the parts the storage has already received so an interrupted upload can be resumed.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Upload session state and the parts already received',
+    type: UploadedPartsResponseDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Missing or invalid access token',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Video not found or owned by another user',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Video is not in the uploading state',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  listUploadedParts(
+    @CurrentUser() user: JwtPayload,
+    @Param('publicId') publicId: string,
+  ): Promise<UploadedPartsResponseDto> {
+    return this.videoUploadsService.listUploadedParts(user.sub, publicId);
   }
 }

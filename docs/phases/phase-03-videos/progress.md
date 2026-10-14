@@ -1,7 +1,7 @@
 # phase-03-videos — Progress
 
 **Status:** in_progress
-**SIs:** 16/24 completed
+**SIs:** 17/24 completed
 
 ### SI-03.1 — Infra: MinIO, Redis, worker e FFmpeg no Docker Compose
 - **Status:** completed
@@ -83,9 +83,10 @@
   - Changed video-flow.completeUpload to return a supertest Test (chainable .expect).
 
 ### SI-03.13 — Endpoint GET /videos/:publicId/upload
-- **Status:** pending
-- **Tests:** -
-- **Observations:** none
+- **Status:** completed
+- **Tests:** 5 e2e passing (test/videos-upload-status.e2e-spec.ts); unit suite 261 passing, e2e 68 passing; tsc clean; lint 0 errors
+- **Observations:**
+  - Scenario 1.3 (rejects-video-in-processing) also drives the processing state via a direct UPDATE until SI-03.14 exists (same as SI-03.12).
 
 ### SI-03.14 — Endpoint POST /videos/:publicId/upload/complete
 - **Status:** pending
