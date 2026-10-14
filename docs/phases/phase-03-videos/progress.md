@@ -1,7 +1,7 @@
 # phase-03-videos — Progress
 
 **Status:** in_progress
-**SIs:** 1/24 completed
+**SIs:** 2/24 completed
 
 ### SI-03.1 — Infra: MinIO, Redis, worker e FFmpeg no Docker Compose
 - **Status:** completed
@@ -12,9 +12,11 @@
   - `MINIO_ROOT_USER`/`MINIO_ROOT_PASSWORD` added to `.env` (gitignored) with compose defaults; `.env.example` is updated in SI-03.2.
 
 ### SI-03.2 — Dependências e namespaces de configuração (storage, fila, vídeo)
-- **Status:** pending
-- **Tests:** -
-- **Observations:** none
+- **Status:** completed
+- **Tests:** 12 passing in src/config (7 new in env.validation.integration-spec.ts); tsc clean; lint 0 errors
+- **Observations:**
+  - `S3_ACCESS_KEY`/`S3_SECRET_KEY` are now required by the Joi schema, so the existing `requiredEnv` fixture in `env.validation.integration-spec.ts` was extended with them.
+  - `.env` (gitignored) updated with all new vars; `MINIO_ROOT_*` also added to `.env.example`.
 
 ### SI-03.3 — StorageModule: cliente S3/MinIO e operações de objeto
 - **Status:** pending
