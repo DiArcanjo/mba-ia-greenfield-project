@@ -1,7 +1,7 @@
 # phase-03-videos — Progress
 
 **Status:** in_progress
-**SIs:** 3/24 completed
+**SIs:** 4/24 completed
 
 ### SI-03.1 — Infra: MinIO, Redis, worker e FFmpeg no Docker Compose
 - **Status:** completed
@@ -32,8 +32,8 @@
   - `Video` entity has no `@Index` on `public_id` besides the unique constraint (the unique already indexes it).
 
 ### SI-03.5 — Gerador de id público do vídeo
-- **Status:** pending
-- **Tests:** -
+- **Status:** completed
+- **Tests:** 3 passing (public-id.util.spec.ts)
 - **Observations:** none
 
 ### SI-03.6 — Exceções de domínio de vídeo e busca de canal por usuário
