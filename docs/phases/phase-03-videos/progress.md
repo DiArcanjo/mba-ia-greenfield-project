@@ -1,7 +1,7 @@
 # phase-03-videos — Progress
 
 **Status:** in_progress
-**SIs:** 7/24 completed
+**SIs:** 8/24 completed
 
 ### SI-03.1 — Infra: MinIO, Redis, worker e FFmpeg no Docker Compose
 - **Status:** completed
@@ -52,8 +52,8 @@
   - `VideosModule` now needs `ConfigModule` (global) + `QueueModule` in any test module; `videos.module.spec.ts` updated.
 
 ### SI-03.8 — VideosService: posse, transições de status e DTO de resposta
-- **Status:** pending
-- **Tests:** -
+- **Status:** completed
+- **Tests:** 20 new across videos.service.spec.ts, videos.service.integration-spec.ts, video-response.dto.spec.ts; full suite 200 passing in 33 suites, e2e 52 passing; tsc clean; lint 0 errors
 - **Observations:** none
 
 ### SI-03.9 — Início do upload: pré-cadastro do rascunho e sessão multipart
