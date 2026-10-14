@@ -85,7 +85,14 @@ services:
     entrypoint:
       - /usr/bin/bash
       - -c
-      - mc alias set local http://minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD" && mc mb --ignore-existing local/streamtube-videos
+      - |
+        set -e
+        mc alias set local http://minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD"
+        mc mb --ignore-existing local/streamtube-videos
+        # MinIO does not support the AbortIncompleteMultipartUpload lifecycle action
+        # (PutBucketLifecycle rejects it); its native equivalent is the stale
+        # multipart uploads sweeper, pinned here to 24h expiry / 6h interval.
+        mc admin config set local api stale_uploads_expiry=24h stale_uploads_cleanup_interval=6h
 
   redis:
     image: redis:7-alpine

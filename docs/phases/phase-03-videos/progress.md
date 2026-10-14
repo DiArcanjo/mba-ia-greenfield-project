@@ -10,6 +10,7 @@
   - Image origin changed per user decision: MinIO no longer publishes public images (Docker Hub `minio/minio` and `minio/mc` fail to pull), so `cgr.dev/chainguard/minio:latest` and `cgr.dev/chainguard/minio-client:latest` (Chainguard packaging of the same MinIO) are used. TD-03 unchanged (still S3-compatible MinIO).
   - Chainguard images have no `/bin/sh`/curl: minio healthcheck uses bash `/dev/tcp` against `/minio/health/live`; `minio-init` entrypoint is `/usr/bin/bash -c`.
   - `MINIO_ROOT_USER`/`MINIO_ROOT_PASSWORD` added to `.env` (gitignored) with compose defaults; `.env.example` is updated in SI-03.2.
+  - **Review adjustment (lifecycle for abandoned multipart uploads, TD-08 Note):** an `AbortIncompleteMultipartUpload` bucket rule (`mc ilm rule import` with `DaysAfterInitiation: 1`) cannot be applied: MinIO rejects it with `InvalidArgument` (verified against the running server; the MinIO S3-compatibility docs state the action is not supported by `PutBucketLifecycle`). `minio-init` instead pins MinIO's native equivalent, `mc admin config set local api stale_uploads_expiry=24h stale_uploads_cleanup_interval=6h`, verified with `mc admin config get local api`. Same intent (abandoned parts removed after ~1 day) but implemented as a server setting, not a bucket rule; on real S3 the lifecycle rule should be applied instead.
 
 ### SI-03.2 — Dependências e namespaces de configuração (storage, fila, vídeo)
 - **Status:** completed
