@@ -1,7 +1,7 @@
 # phase-03-videos — Progress
 
 **Status:** in_progress
-**SIs:** 12/24 completed
+**SIs:** 13/24 completed
 
 ### SI-03.1 — Infra: MinIO, Redis, worker e FFmpeg no Docker Compose
 - **Status:** completed
@@ -64,8 +64,8 @@
   - Importing StorageModule/ChannelsModule into VideosModule means every test module that loads VideosModule must also load storageConfig and videoConfig (videos.module.spec and producer integration spec updated).
 
 ### SI-03.10 — Handshake de upload: URLs de partes, retomada e conclusão
-- **Status:** pending
-- **Tests:** -
+- **Status:** completed
+- **Tests:** 20 new (19 unit + 4 integration vs PostgreSQL+MinIO+Redis); full suite green; tsc clean; lint 0 errors
 - **Observations:** none
 
 ### SI-03.11 — Endpoint POST /videos

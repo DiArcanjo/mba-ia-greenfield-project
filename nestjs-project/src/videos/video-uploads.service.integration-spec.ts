@@ -1,13 +1,19 @@
+import { getQueueToken } from '@nestjs/bullmq';
 import { ConfigModule } from '@nestjs/config';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import type { Queue } from 'bullmq';
 import { DataSource, Repository } from 'typeorm';
 import { RefreshToken } from '../auth/entities/refresh-token.entity';
 import { VerificationToken } from '../auth/entities/verification-token.entity';
 import { Channel } from '../channels/entities/channel.entity';
 import { ChannelsModule } from '../channels/channels.module';
 import { ChannelsService } from '../channels/channels.service';
-import { VideoTooLargeException } from '../common/exceptions/domain.exception';
+import {
+  InvalidUploadPartsException,
+  UploadSizeMismatchException,
+  VideoTooLargeException,
+} from '../common/exceptions/domain.exception';
 import queueConfig from '../config/queue.config';
 import storageConfig from '../config/storage.config';
 import videoConfig from '../config/video.config';
@@ -20,6 +26,7 @@ import {
 import { deleteKeysByPrefix, uploadPartViaPresignedUrl } from '../test/storage';
 import { User } from '../users/entities/user.entity';
 import { Video } from './entities/video.entity';
+import { VIDEO_PROCESSING_QUEUE } from './video-processing.constants';
 import { VideoUploadsService } from './video-uploads.service';
 import { VideosModule } from './videos.module';
 
@@ -33,6 +40,7 @@ describe('VideoUploadsService.initiate (integration, PostgreSQL + MinIO)', () =>
   let videoRepository: Repository<Video>;
   let channelsService: ChannelsService;
   let userId: string;
+  let queue: Queue;
   const originalPrefix = process.env.QUEUE_PREFIX;
   const originalPartSize = process.env.VIDEO_PART_SIZE_BYTES;
 
@@ -56,6 +64,7 @@ describe('VideoUploadsService.initiate (integration, PostgreSQL + MinIO)', () =>
     dataSource = module.get(DataSource);
     channelsService = module.get(ChannelsService);
     videoRepository = dataSource.getRepository(Video);
+    queue = module.get(getQueueToken(VIDEO_PROCESSING_QUEUE));
   });
 
   afterAll(async () => {
@@ -69,6 +78,7 @@ describe('VideoUploadsService.initiate (integration, PostgreSQL + MinIO)', () =>
   });
 
   beforeEach(async () => {
+    await queue.obliterate({ force: true });
     await cleanAllTables(dataSource);
     const user = await dataSource
       .getRepository(User)
@@ -146,5 +156,101 @@ describe('VideoUploadsService.initiate (integration, PostgreSQL + MinIO)', () =>
     expect(spy).not.toHaveBeenCalled();
     expect(await videoRepository.count()).toBe(0);
     spy.mockRestore();
+  });
+
+  describe('handshake', () => {
+    const FIVE_MIB = 5242880;
+    // 2 parts: 5 MiB + 1 KiB
+    const size = FIVE_MIB + 1024;
+
+    async function startUpload(declaredSize = size) {
+      const session = await service.initiate(userId, {
+        ...dto,
+        size: declaredSize,
+      });
+      return session;
+    }
+
+    async function sendParts(publicId: string, bytesPerPart: number[]) {
+      const { parts } = await service.presignParts(
+        userId,
+        publicId,
+        bytesPerPart.map((_, i) => i + 1),
+      );
+      const completed: { partNumber: number; etag: string }[] = [];
+      for (const part of parts) {
+        const etag = await uploadPartViaPresignedUrl(
+          part.url,
+          new Uint8Array(bytesPerPart[part.partNumber - 1]),
+        );
+        completed.push({ partNumber: part.partNumber, etag });
+      }
+      return completed;
+    }
+
+    it('should list uploaded parts, complete, move to processing and enqueue one job', async () => {
+      const { publicId } = await startUpload();
+      const completed = await sendParts(publicId, [FIVE_MIB, 1024]);
+
+      const listed = await service.listUploadedParts(userId, publicId);
+      expect(listed.parts.map((p) => p.partNumber)).toEqual([1, 2]);
+      expect(listed.parts.every((p) => p.etag.length > 0)).toBe(true);
+
+      const result = await service.complete(userId, publicId, completed);
+
+      expect(result.processingStatus).toBe('processing');
+      const video = await videoRepository.findOneByOrFail({
+        public_id: publicId,
+      });
+      expect(video.processing_status).toBe('processing');
+      expect(video.upload_id).toBeNull();
+      const job = await queue.getJob(video.id);
+      expect(job).toBeDefined();
+      expect(job!.name).toBe('process-video');
+      expect(job!.opts.jobId).toBe(video.id);
+    });
+
+    it('should be idempotent when complete is called twice', async () => {
+      const { publicId } = await startUpload();
+      const completed = await sendParts(publicId, [FIVE_MIB, 1024]);
+
+      await service.complete(userId, publicId, completed);
+      const second = await service.complete(userId, publicId, completed);
+
+      expect(second.processingStatus).toBe('processing');
+      const counts = await queue.getJobCounts('waiting', 'delayed', 'active');
+      expect(counts.waiting + counts.delayed + counts.active).toBe(1);
+    });
+
+    it('should reject an incomplete parts list and keep the video uploading', async () => {
+      const { publicId } = await startUpload();
+      const completed = await sendParts(publicId, [FIVE_MIB, 1024]);
+
+      await expect(
+        service.complete(userId, publicId, completed.slice(0, 1)),
+      ).rejects.toBeInstanceOf(InvalidUploadPartsException);
+
+      const video = await videoRepository.findOneByOrFail({
+        public_id: publicId,
+      });
+      expect(video.processing_status).toBe('uploading');
+    });
+
+    it('should fail the video and remove the object on a size mismatch', async () => {
+      // Declares one byte more than what is actually uploaded.
+      const { publicId } = await startUpload(size + 1);
+      const completed = await sendParts(publicId, [FIVE_MIB, 1024]);
+
+      await expect(
+        service.complete(userId, publicId, completed),
+      ).rejects.toBeInstanceOf(UploadSizeMismatchException);
+
+      const video = await videoRepository.findOneByOrFail({
+        public_id: publicId,
+      });
+      expect(video.processing_status).toBe('failed');
+      expect(video.failure_reason).toBe('upload size mismatch');
+      await expect(storage.headObject(video.storage_key)).rejects.toThrow();
+    });
   });
 });

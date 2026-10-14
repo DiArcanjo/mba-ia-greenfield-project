@@ -6,16 +6,27 @@ import { QueryFailedError, Repository } from 'typeorm';
 import { ChannelsService } from '../channels/channels.service';
 import {
   ChannelNotFoundException,
+  InvalidUploadPartsException,
+  InvalidUploadStateException,
+  UploadSizeMismatchException,
   VideoTooLargeException,
 } from '../common/exceptions/domain.exception';
 import videoConfig from '../config/video.config';
 import { STORAGE_KEYS } from '../storage/storage.constants';
 import { StorageService } from '../storage/storage.service';
+import type { CompletedPartDto } from './dto/complete-upload.dto';
 import type { InitiateUploadDto } from './dto/initiate-upload.dto';
+import type {
+  PresignedPartsResponseDto,
+  UploadAcceptedResponseDto,
+  UploadedPartsResponseDto,
+} from './dto/upload-parts-response.dto';
 import type { UploadSessionResponseDto } from './dto/upload-session-response.dto';
 import { Video } from './entities/video.entity';
 import { generatePublicId } from './public-id.util';
+import { VideoProcessingProducer } from './video-processing.producer';
 import { ProcessingStatus, PublicationStatus } from './video.types';
+import { VideosService } from './videos.service';
 
 const PG_UNIQUE_VIOLATION = '23505';
 const PUBLIC_ID_COLUMN = 'public_id';
@@ -32,6 +43,10 @@ function isPublicIdCollision(err: unknown): boolean {
   );
 }
 
+function isNoSuchUpload(err: unknown): boolean {
+  return err instanceof Error && err.name === 'NoSuchUpload';
+}
+
 function titleFromFilename(filename: string): string {
   const dot = filename.lastIndexOf('.');
   const base = dot > 0 ? filename.slice(0, dot) : filename;
@@ -45,6 +60,8 @@ export class VideoUploadsService {
     private readonly videoRepository: Repository<Video>,
     private readonly channelsService: ChannelsService,
     private readonly storageService: StorageService,
+    private readonly videosService: VideosService,
+    private readonly producer: VideoProcessingProducer,
     @Inject(videoConfig.KEY)
     private readonly config: ConfigType<typeof videoConfig>,
   ) {}
@@ -94,6 +111,138 @@ export class VideoUploadsService {
       publicationStatus: video.publication_status,
       upload: { uploadId, partSize, partCount },
     };
+  }
+
+  async presignParts(
+    userId: string,
+    publicId: string,
+    partNumbers: number[],
+  ): Promise<PresignedPartsResponseDto> {
+    const video = await this.findUploadingVideo(userId, publicId);
+    const partCount = this.partCountOf(video);
+    if (partNumbers.some((n) => n < 1 || n > partCount)) {
+      throw new InvalidUploadPartsException();
+    }
+
+    const parts = await Promise.all(
+      partNumbers.map(async (partNumber) => ({
+        partNumber,
+        url: await this.storageService.presignUploadPart(
+          video.storage_key,
+          video.upload_id as string,
+          partNumber,
+          this.config.partUrlTtlSeconds,
+        ),
+      })),
+    );
+    return { parts };
+  }
+
+  async listUploadedParts(
+    userId: string,
+    publicId: string,
+  ): Promise<UploadedPartsResponseDto> {
+    const video = await this.findUploadingVideo(userId, publicId);
+    const uploaded = await this.storageService.listParts(
+      video.storage_key,
+      video.upload_id as string,
+    );
+    return {
+      processingStatus: video.processing_status,
+      partSize: video.part_size_bytes,
+      partCount: this.partCountOf(video),
+      parts: uploaded.map(({ partNumber, size, etag }) => ({
+        partNumber,
+        size,
+        etag,
+      })),
+    };
+  }
+
+  async complete(
+    userId: string,
+    publicId: string,
+    parts: CompletedPartDto[],
+  ): Promise<UploadAcceptedResponseDto> {
+    const video = await this.videosService.findOwnedByPublicId(
+      publicId,
+      userId,
+    );
+
+    if (video.processing_status === ProcessingStatus.FAILED) {
+      throw new InvalidUploadStateException();
+    }
+    if (video.processing_status !== ProcessingStatus.UPLOADING) {
+      return this.acceptedFor(video);
+    }
+
+    const partCount = this.partCountOf(video);
+    const numbers = parts.map((p) => p.partNumber).sort((a, b) => a - b);
+    if (
+      numbers.length !== partCount ||
+      numbers.some((n, index) => n !== index + 1)
+    ) {
+      throw new InvalidUploadPartsException();
+    }
+
+    try {
+      await this.storageService.completeMultipartUpload(
+        video.storage_key,
+        video.upload_id as string,
+        parts,
+      );
+    } catch (err) {
+      if (!isNoSuchUpload(err)) throw err;
+      // A concurrent request may have already completed this upload.
+      const current = await this.videosService.findOwnedByPublicId(
+        publicId,
+        userId,
+      );
+      if (current.processing_status === ProcessingStatus.UPLOADING) throw err;
+      return this.acceptedFor(current);
+    }
+
+    const head = await this.storageService.headObject(video.storage_key);
+    if (head.contentLength !== video.size_bytes) {
+      await this.storageService.deleteObject(video.storage_key);
+      await this.videosService.markFailed(video.id, 'upload size mismatch');
+      throw new UploadSizeMismatchException();
+    }
+
+    await this.videosService.markProcessing(video.id);
+    await this.producer.enqueue(video.id);
+    return {
+      publicId: video.public_id,
+      processingStatus: ProcessingStatus.PROCESSING,
+    };
+  }
+
+  private async acceptedFor(video: Video): Promise<UploadAcceptedResponseDto> {
+    if (video.processing_status === ProcessingStatus.PROCESSING) {
+      await this.producer.enqueue(video.id);
+    }
+    return {
+      publicId: video.public_id,
+      processingStatus: video.processing_status,
+    };
+  }
+
+  private async findUploadingVideo(
+    userId: string,
+    publicId: string,
+  ): Promise<Video> {
+    const video = await this.videosService.findOwnedByPublicId(
+      publicId,
+      userId,
+    );
+    if (video.processing_status !== ProcessingStatus.UPLOADING) {
+      throw new InvalidUploadStateException();
+    }
+    return video;
+  }
+
+  private partCountOf(video: Video): number {
+    return Math.ceil(video.size_bytes / video.part_size_bytes);
   }
 
   private async insertWithUniquePublicId(data: Partial<Video>): Promise<Video> {
