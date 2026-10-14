@@ -1,7 +1,7 @@
 # phase-03-videos — Progress
 
 **Status:** in_progress
-**SIs:** 20/24 completed
+**SIs:** 21/24 completed
 
 ### SI-03.1 — Infra: MinIO, Redis, worker e FFmpeg no Docker Compose
 - **Status:** completed
@@ -115,8 +115,8 @@
   - From here on the e2e suite depends on the compose video-worker being up.
 
 ### SI-03.18 — Endpoint GET /videos/:publicId/download
-- **Status:** pending
-- **Tests:** -
+- **Status:** completed
+- **Tests:** 4 e2e passing (test/videos-download.e2e-spec.ts); unit suite 266 passing; tsc clean; lint 0 errors
 - **Observations:** none
 
 ### SI-03.19 — Endpoint GET /videos/:publicId/thumbnail

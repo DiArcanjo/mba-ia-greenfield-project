@@ -88,4 +88,41 @@ export class VideosController {
       statusCode: 302,
     };
   }
+
+  @Get(':publicId/download')
+  @Redirect()
+  @ApiBearerAuth('access-token')
+  @ApiOperation({
+    summary: 'Download a video',
+    description:
+      'Authorizes the owner and redirects to a presigned storage URL that forces Content-Disposition: attachment with the original file name.',
+  })
+  @ApiResponse({
+    status: 302,
+    description: 'Redirect to the presigned storage URL (Location header)',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Missing or invalid access token',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Video not found or owned by another user',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Video is not ready yet',
+    schema: { $ref: getSchemaPath(ApiErrorEnvelope) },
+  })
+  async download(
+    @CurrentUser() user: JwtPayload,
+    @Param('publicId') publicId: string,
+  ): Promise<{ url: string; statusCode: number }> {
+    return {
+      url: await this.videoDeliveryService.getDownloadUrl(user.sub, publicId),
+      statusCode: 302,
+    };
+  }
 }
