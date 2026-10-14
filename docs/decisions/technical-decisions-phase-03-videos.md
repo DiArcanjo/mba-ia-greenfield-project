@@ -274,6 +274,8 @@ _Subprojects in scope:_
 **Decision:** A (Independent processing and publication statuses; retry with backoff, then `FAILED` with reason)
 
 **Note:** Adjusted from the Recommendation in two points. (1) The capability "Pré-cadastro automático do vídeo como rascunho" must be representable already in Phase 03, so the `publicationStatus` column is created **now** with default `DRAFT` (the only value written in this phase; Phase 04 adds the transition to published and visibility). The Recommendation's "created as draft" otherwise had no column to live in. (2) `processingStatus` is `UPLOADING → PROCESSING → READY | FAILED` (no separate `UPLOADED` state) and the periodic sweeper is dropped: `complete` is idempotent and enqueues with a deterministic BullMQ `jobId` (the video id), so a lost enqueue is recovered by the client retrying `complete`. Abandoned multipart uploads are cleaned by an `AbortIncompleteMultipartUpload` lifecycle rule on the bucket.
+**Revisions:**
+- 2026-10-14 — No ambiente local, a limpeza de uploads multipart abandonados usa a configuração nativa do MinIO (`stale_uploads_expiry=24h`, `stale_uploads_cleanup_interval=6h`), aplicada pelo serviço `minio-init` do Compose; em S3 real a intenção da decisão é atendida pela regra de lifecycle `AbortIncompleteMultipartUpload` no bucket. _Rationale:_ o MinIO não suporta a ação `AbortIncompleteMultipartUpload` em `PutBucketLifecycle` (o servidor rejeita a configuração com `InvalidArgument`, verificado na implementação do SI-03.1), então a regra de bucket citada na Note não pode ser aplicada localmente; o resultado esperado (partes abandonadas removidas após ~1 dia) é o mesmo.
 
 ---
 
