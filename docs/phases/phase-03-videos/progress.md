@@ -1,7 +1,7 @@
 # phase-03-videos — Progress
 
 **Status:** in_progress
-**SIs:** 18/24 completed
+**SIs:** 20/24 completed
 
 ### SI-03.1 — Infra: MinIO, Redis, worker e FFmpeg no Docker Compose
 - **Status:** completed
@@ -134,9 +134,12 @@
 - **Observations:** none
 
 ### SI-03.22 — Worker de vídeo: processor BullMQ, retry/falha e entrypoint separado
-- **Status:** pending
-- **Tests:** -
-- **Observations:** none
+- **Status:** completed
+- **Tests:** 5 new (4 processor integration vs real Redis/PostgreSQL/MinIO/ffmpeg + 1 WorkerModule unit); unit suite 266 passing, e2e 80 passing; tsc clean; lint 0 errors; npm run build produces dist/main.js and dist/worker.js
+- **Observations:**
+  - CommonJS runtime validated: npm run build emits dist/main.js and dist/worker.js, and 'node dist/worker' boots in CJS loading the ESM-only @nestjs/bullmq (Node 25 require(esm)). The compose video-worker (start:worker:dev) is up, opens no HTTP port, and a throwaway e2e check showed it consuming the real queue and taking a generated MP4 to ready (not committed; SI-03.23 covers it).
+  - WorkerModule also imports UsersModule: booting only CoreModule+VideosModule failed with 'Entity metadata for Channel#user was not found' because autoLoadEntities only sees entities registered via forFeature in loaded modules; UsersModule registers User.
+  - CoreModule extracted from AppModule (ConfigModule.forRoot + TypeOrmModule.forRootAsync) with no behavior change; AppModule keeps the same imports otherwise.
 
 ### SI-03.23 — E2E ponta a ponta com a infraestrutura real do Compose
 - **Status:** pending
