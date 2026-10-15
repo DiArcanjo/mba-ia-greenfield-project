@@ -16,7 +16,7 @@ Then verify each infrastructure service is actually ready to accept connections 
 - **Redis:** `docker compose exec redis redis-cli ping` — expect `PONG`
 - **MinIO bucket:** `docker compose logs minio-init` — expect `Bucket created successfully` (or already exists); the one-shot container exits with code `0`
 
-The `video-worker` container must be up for the video-processing e2e tests (it only starts working once the `start:worker:dev` script exists).
+The `video-worker` container must be up (`docker compose up -d video-worker`) for the video e2e tests: they use the real worker and do not replace it.
 
 Only start the NestJS dev server (`npm run start:dev`) when the user **explicitly** asks to run the application — never as part of "start the environment".
 

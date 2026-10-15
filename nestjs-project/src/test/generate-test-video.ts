@@ -3,8 +3,12 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-/** Generates a valid 2s 320x240 H.264 MP4 with ffmpeg's lavfi test source. */
-export async function generateTestVideo(): Promise<Buffer> {
+/**
+ * Generates a valid 2s 320x240 H.264 MP4 with ffmpeg's lavfi test source.
+ * `paddingBytes` appends an MP4 `free` box (ignored by every demuxer), so the
+ * file stays a valid video while being large enough to span several parts.
+ */
+export async function generateTestVideo(paddingBytes = 0): Promise<Buffer> {
   const dir = await mkdtemp(join(tmpdir(), 'test-video-'));
   const file = join(dir, 'test.mp4');
   try {
@@ -34,7 +38,12 @@ export async function generateTestVideo(): Promise<Buffer> {
           : reject(new Error(`ffmpeg exited with ${code}: ${stderr}`)),
       );
     });
-    return await readFile(file);
+    const video = await readFile(file);
+    if (paddingBytes <= 0) return video;
+    const free = Buffer.alloc(paddingBytes);
+    free.writeUInt32BE(paddingBytes, 0);
+    free.write('free', 4, 'ascii');
+    return Buffer.concat([video, free]);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

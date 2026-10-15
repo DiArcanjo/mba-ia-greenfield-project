@@ -1,7 +1,7 @@
 # phase-03-videos — Progress
 
 **Status:** in_progress
-**SIs:** 22/24 completed
+**SIs:** 23/24 completed
 
 ### SI-03.1 — Infra: MinIO, Redis, worker e FFmpeg no Docker Compose
 - **Status:** completed
@@ -144,9 +144,12 @@
   - CoreModule extracted from AppModule (ConfigModule.forRoot + TypeOrmModule.forRootAsync) with no behavior change; AppModule keeps the same imports otherwise.
 
 ### SI-03.23 — E2E ponta a ponta com a infraestrutura real do Compose
-- **Status:** pending
-- **Tests:** -
-- **Observations:** none
+- **Status:** completed
+- **Tests:** 17 e2e passing across videos-upload, videos-processing and videos-delivery (real PostgreSQL, MinIO, Redis, compose video-worker and ffmpeg, no mocks); unit suite 266 passing; full e2e green; tsc clean; lint 0 errors
+- **Observations:**
+  - src/test/video-flow.ts was created earlier (SI-03.11) and only extended here (createReadyVideo).
+  - generateTestVideo(paddingBytes) appends a standard MP4 'free' box so a real ffmpeg-generated 2s video spans exactly 2 parts of 5 MiB (VIDEO_PART_SIZE_BYTES overridden to 5242880 in the processing spec before the app boots); the media stays a valid video, ffprobe/ffmpeg ignore the box.
+  - nestjs-project/CLAUDE.md now states the e2e suite needs the compose video-worker up.
 
 ### SI-03.24 — Contrato OpenAPI e coleção de requests de vídeos
 - **Status:** pending
