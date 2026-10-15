@@ -1,0 +1,58 @@
+Claude Code — sessão 6cbd5603-fc95-4aea-9f02-67caac6bea52
+
+
+❯ Revisão crítica do plano docs/phases/phase-03-videos/phase-03-videos.md (gerado pelo /plan-build): ele contradiz a decisão phase-03-videos/TD-08. A Note do TD-08 em docs/decisions/technical-decisions-phase-03-videos.md diz explicitamente que processingStatus é UPLOADING → PROCESSING → READY | FAILED, SEM estado UPLOADED separado: o complete verificado transiciona uploading → processing e enfileira (jobId = videoId); o worker processa vídeos em processing e termina em ready ou failed; complete idempotente re-enfileira com segurança quando o vídeo já está em processing.
+
+Corrija o plano para ficar coerente com o TD-08 em TODOS os pontos onde 'uploaded' aparece: Data Model (enum video_processing_status sem 'uploaded', ciclo de vida), API Contracts (resposta 202 do complete e GET /videos/:publicId), Error Catalog, Events/Messages (producer/trigger), e o texto/critérios de aceite dos SIs afetados (SI-03.4, SI-03.8, SI-03.10, SI-03.14, SI-03.21, SI-03.22, SI-03.23 e outros que citem). Ajuste também o estado em que o worker atua (ele parte de 'processing'; transição condicional processing → ready|failed). Não mude nada além disso. Ao final, liste as linhas alteradas e confirme com grep que não sobrou nenhuma ocorrência de 'uploaded' como status.
+
+● Grep((?i)uploaded)
+  ⎿  117:1. Criar `src/videos/video.types.ts` — enums `ProcessingStatus` (`uploading`, `uploaded`, `processing`, `ready`, `failed`) e `PublicationStatus` (`draft`, `published`) (per `phase-03-videos/TD-...
+● Grep(TD-08)
+  ⎿  28:**Context:** The architecture diagram marks the message queue as "TBD". The API publishes a job when an upload completes; the worker consumes it. Needs retries with backoff, a way to fail perman...
+● Read(/Users/dianaarcanjo/Projetos/DesafiosPos/mba-ia-greenfield-project/docs/decisions/technical-decisions-phase-03-videos.md)
+  ⎿  272 **Recommendation:** **Option A (independent processing and publication statuses; retry+backoff then `FAILED` with reason; sweeper for lost enqueues)** — it keeps Phase 04's publication flow add...
+● Bash(cd /Users/dianaarcanjo/Projetos/DesafiosPos/mba-ia-greenfield-project/docs/phases/phase-03-videos && grep -n -i -E 'uploaded' phase-03-videos.md | cut -c1-20 >/dev/null; for n in 229 293; do echo "--- $n"; sed -n "${n...)
+  ⎿  --- 229 2. Em `VideosService`, adicionar transições condicionais via `repository.update({ id, processing_status: <esperado> }, {...})` retornando `boolean` por `affected > 0`: `markUploaded(id)` (`...
+● Bash(for r in 111,125 222,232 284,296 399,425 595,612 626,656 836,880 984,995; do echo "=== $r"; sed -n "${r}p" phase-03-videos.md; done; grep -n -i -E 'Error Catalog|INVALID_UPLOAD_STATE' phase-03-videos.md | cut -c1-220)
+  ⎿  === 111,125 ### SI-03.4 — Entidade Video, migration e VideosModule base **Description:** Criar a entidade `Video` com os dois status independentes, a migration correspondente gerada pela CLI do Typ...
+● Bash(cp phase-03-videos.md /tmp/plan.bak && python3 -I - <<'EOF' p='phase-03-videos.md' s=open(p,encoding='utf-8').read() R=[ ("(`uploading`, `uploaded`, `processing`, `ready`, `failed`) e `PublicationStatus`","(`uploading...)
+  ⎿  Traceback (most recent call last): File "<stdin>", line 26, in <module> AssertionError: (2, '`"uploaded"` | `"processing"` | `"ready"`') 117:1. Criar `src/videos/video.types.ts` — enums `Processing...
+● Bash(grep -n '"uploaded"` | `"processing"' phase-03-videos.md | cut -c1-200)
+  ⎿  853:- processingStatus: string — `"uploaded"` | `"processing"` | `"ready"` 873:- processingStatus: string — `"uploading"` | `"uploaded"` | `"processing"` | `"ready"` | `"failed"`
+
+● Os replace anteriores não gravaram nada porque a validação falhou antes da escrita; uma das strings também casava com a linha 873. Estou ajustando a ordem e reaplicando.
+
+● Bash(python3 -I - <<'EOF' p='phase-03-videos.md' s=open(p,encoding='utf-8').read() R=[ ("(`uploading`, `uploaded`, `processing`, `ready`, `failed`) e `PublicationStatus`","(`uploading`, `processing`, `ready`, `failed`) e `...)
+  ⎿  --- restantes: 751:**Ciclo de vida de `processing_status` (per `phase-03-videos/TD-08`):** `uploading` → `processing` (após `complete` verificado, que enfileira o job; sem estado `uploaded` separad...
+● Bash(python3 -I - <<'EOF' p='phase-03-videos.md' s=open(p,encoding='utf-8').read() a="que enfileira o job; sem estado `uploaded` separado) → `ready`" assert s.count(a)==1 s=s.replace(a,"que enfileira o job com `jobId = vid...)
+  ⎿  **Ciclo de vida de `processing_status` (per `phase-03-videos/TD-08`):** `uploading` → `processing` (após `complete` verificado, que enfileira o job com `jobId = videoId`) → `ready` (metadados + thu...
+
+● Corrigi o plano para seguir o TD-08: não existe mais `uploaded` como status em `phase-03-videos.md`. Alterei 19 linhas e não mexi em mais nada. Um `grep -i uploaded` só acha os nomes `listUploadedParts` e `UploadedPartsResponseDto`, que são identificadores sem relação com o status. Não rodei testes nem lint, porque a mudança é só no documento. O backup do original está em `/tmp/plan.bak`.
+
+## Linhas alteradas
+
+| Linha | Seção / SI | Mudança |
+|---|---|---|
+| 117 | SI-03.4 | O enum `ProcessingStatus` ficou `uploading, processing, ready, failed`. |
+| 229 | SI-03.8 | `markUploaded` saiu. `markProcessing` agora faz `uploading → processing` e zera `upload_id`. |
+| 238, 247 | SI-03.8 (testes e critério) | O fluxo testado passou a ser `markProcessing → markReady`. |
+| 286 | SI-03.10 (descrição) | A conclusão verifica o objeto, transiciona para `processing` e enfileira. |
+| 293 | SI-03.10 (`complete`) | Status já em `processing` ou `ready` devolve o estado atual. O re-enfileiramento seguro por `jobId` acontece só em `processing`. Em `uploading`, depois de verificar, chama `markProcessing` e `enqueue`. |
+| 301, 309 | SI-03.10 (teste e critério) | O resultado esperado do `complete` virou `processing` + 1 job. |
+| 367, 393 | SI-03.12 e SI-03.13 (critérios dos `409`) | O exemplo de estado que gera `409 INVALID_UPLOAD_STATE` virou `processing`. |
+| 418 | SI-03.14 | O `202` do `complete` retorna `processingStatus: "processing"`. |
+| 601 | SI-03.21 | O worker parte de `processing`. Fora disso, `process` retorna sem efeito, e ele não chama mais `markProcessing`. |
+| 649 | SI-03.22 | O job parte de um vídeo em `processing`. |
+| 736 | Data Model | O enum `video_processing_status` ficou sem `'uploaded'`. |
+| 751 | Data Model (ciclo de vida) | `uploading → processing` (por `complete`, com `jobId = videoId`) `→ ready | failed`. |
+| 840 | API Contracts (`complete`) | Descrição e idempotência ajustadas para `processing` e `ready`. |
+| 853 | API Contracts (`complete`) | A resposta `202` ficou `"processing"` ou `"ready"`. |
+| 873 | API Contracts (`GET /videos/:publicId`) | Os valores de `processingStatus` ficaram `uploading, processing, ready, failed`. |
+| 989 | Events/Messages | O producer enfileira após a transição `uploading → processing`. |
+
+## Pontos que ficaram como estavam
+- **Error Catalog:** `INVALID_UPLOAD_STATE` (linha 971) já falava só em `uploading` e `failed`, então não precisou mudar.
+- **SI-03.23:** nenhuma linha citava `uploaded`. A transição `processing → ready | failed` já está coberta pelas linhas 249/601/649 e pelo `markReady`/`markFailed` em SI-03.8.
+
+Os critérios das linhas 367 e 393 agora usam `processing` como exemplo de estado inválido para o `409`.
+

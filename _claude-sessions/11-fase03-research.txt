@@ -1,0 +1,75 @@
+Claude Code — sessão 58df118b-7c8e-4a9b-885d-cf199222df61
+
+
+❯ <command-message>research</command-message>
+<command-name>/research</command-name>
+<command-args>phase 03
+
+Contexto adicional (dentro do escopo da Fase 03): o object storage já está definido pelo projeto (S3-compatível; MinIO em Docker no ambiente local, trocável por S3 em produção) — decida apenas COMO usá-lo (buckets/chaves, upload pré-assinado). As decisões genuinamente em aberto que precisam ser pesquisadas, com opções, trade-offs e recomendação: (1) tecnologia da fila (o plano marca como TBD), (2) estratégia de upload de até 10GB sem passar o arquivo pela API, (3) como o worker de vídeo roda (processo/container separado) e como extrai metadados e gera thumbnail com FFmpeg/ffprobe, (4) estratégia de URL única por vídeo, (5) estratégia de streaming (range requests / 206) e download, (6) ciclo de status do vídeo e comportamento em falha de processamento. Consulte a documentação das libs candidatas via context7 antes de recomendar. Escreva o documento em docs/decisions/technical-decisions-phase-03-videos.md (slug: phase-03-videos).</command-args>
+
+  ⎿  (skill carregada: research)
+
+● Vou começar lendo o plano do projeto, as decisões existentes e os manifests.
+
+● Grep(^#{1,4})
+  ⎿  1:# StreamTube — Planejamento Geral do Projeto 3:## 1. Visão Geral 7:### Principais Características 18:### Stack Tecnológica 26:## 2. Arquitetura do Software 32:## 3. Fases do Projeto 34:### Fase 0...
+● Glob(docs/decisions/*)
+● Glob(*/package.json)
+  ⎿  nestjs-project/package.json next-frontend/package.json
+  ⎿  docs/decisions/technical-decisions-next-frontend-config-base.md docs/decisions/technical-decisions-next-frontend-msw-foundation.md docs/decisions/technical-decisions-next-frontend-openapi-typing.md...
+● Bash(ls; ls docs docs/phases docs/tasks 2>/dev/null; cat compose.yaml docker-compose.yml 2>/dev/null | head -80)
+  ⎿  _claude-sessions CLAUDE.md docs FC Tube sem padrão.fig FC Tube.fig mcp.example.py nestjs-project next-frontend README.md scripts skills-lock.json whiteboard.svg docs: decisions design-system-ai-imp...
+● Read(/Users/dianaarcanjo/Projetos/DesafiosPos/mba-ia-greenfield-project/docs/project-plan.md)
+  ⎿  1 # StreamTube — Planejamento Geral do Projeto 2 3 ## 1. Visão Geral 4 5 O StreamTube é uma plataforma de compartilhamento de vídeos onde usuários cadastrados podem fazer upload, gerenciar e public...
+● Bash(sed -n 1,400p nestjs-project/package.json | grep -A80 '"dependencies"'; ls nestjs-project; ls -a . | grep -i compose; find . -maxdepth 2 -name 'compose*' -o -maxdepth 2 -name 'docker-compose*' | grep -v node_modules; ...)
+  ⎿  "dependencies": { "@nestjs-modules/mailer": "^2.3.4", "@nestjs/common": "^11.0.1", "@nestjs/config": "^4.0.3", "@nestjs/core": "^11.0.1", "@nestjs/jwt": "^11.0.2", "@nestjs/platform-express": "^11....
+● Bash(cat nestjs-project/compose.yaml; cat docs/diagrams/software-arch.mermaid; sed -n 1,20p docs/decisions/technical-decisions-phase-02-auth.md; sed -n 44,130p docs/decisions/technical-decisions-phase-02-auth.md; grep -n "...)
+  ⎿  services: nestjs-api: build: context: . dockerfile: Dockerfile.dev ports: - 3000:3000 volumes: - .:/home/node/app depends_on: db: condition: service_healthy mailpit: condition: service_started db: ...
+● mcp__context7__resolve-library-id({"libraryName": "BullMQ", "query": "BullMQ job queue with NestJS, retries, separate worker process"})
+● mcp__context7__resolve-library-id({"libraryName": "AWS SDK for JavaScript v3 S3 presigner", "query": "multipart upload presigned URLs createPresignedPost getSignedUrl"})
+● mcp__context7__resolve-library-id({"libraryName": "fluent-ffmpeg", "query": "ffprobe metadata and screenshot thumbnail"})
+  ⎿  Available Libraries: - Title: BullMQ - Context7-compatible library ID: /taskforcesh/bullmq - Description: BullMQ - Message Queue and Batch processing for NodeJS and Python based on Redis - Code Sni...
+  ⎿  Available Libraries: - Title: AWS SDK for JavaScript v3 - Context7-compatible library ID: /websites/aws_amazon_awsjavascriptsdk_v3 - Description: The AWS SDK for JavaScript v3 provides libraries, p...
+  ⎿  Available Libraries: - Title: Fluent FFmpeg - Context7-compatible library ID: /fluent-ffmpeg/node-fluent-ffmpeg - Description: Fluent-ffmpeg is a Node.js module that provides a fluent API for inter...
+
+● Agora consulto a documentação das libs candidatas.
+
+● mcp__context7__query-docs({"libraryId": "/taskforcesh/bullmq", "query": "retry attempts backoff, stalled jobs, running worker in separate process, removeOnComplete, job lock for long-running jobs"})
+● mcp__context7__query-docs({"libraryId": "/nestjs/bull", "query": "BullMQ NestJS @nestjs/bullmq registerQueue, WorkerHost Processor, standalone application context"})
+● mcp__context7__query-docs({"libraryId": "/aws/aws-sdk-js-v3", "query": "S3 multipart upload presigned UploadPart URL getSignedUrl, CreateMultipartUploadCommand, CompleteMultipartUpload, forcePathStyle, MinIO endpoint, createPresignedPost conte...)
+  ⎿  ### Use UnrecoverableError to stop retries Source: https://github.com/taskforcesh/bullmq/blob/master/docs/gitbook/patterns/stop-retrying-jobs.md Throwing UnrecoverableError in a worker moves the jo...
+● mcp__context7__query-docs({"libraryId": "/fluent-ffmpeg/node-fluent-ffmpeg", "query": "ffprobe metadata duration, screenshots thumbnail at timestamp, input from HTTP url"})
+  ⎿  ### registerQueue Source: https://github.com/nestjs/bull/blob/master/_autodocs/api-reference/bull-module.md Registers one or more Bull queues as providers in a NestJS module. This method is used to...
+● mcp__context7__resolve-library-id({"libraryName": "nanoid", "query": "short unique url-friendly id generation custom alphabet collision"})
+  ⎿  Available Libraries: - Title: Nano ID - Context7-compatible library ID: /ai/nanoid - Description: Nano ID is a tiny (118 bytes), secure, URL-friendly unique string ID generator for JavaScript with ...
+  ⎿  ### Generate presigned URL using S3Client and GetObjectCommand Source: https://github.com/aws/aws-sdk-js-v3/blob/main/packages/s3-request-presigner/README.md Generates a presigned URL for an S3 ope...
+  ⎿  ### Read Metadata from File with fluent-ffmpeg ffprobe Source: https://github.com/fluent-ffmpeg/node-fluent-ffmpeg/blob/master/README.md Demonstrates how to use the `ffprobe` method directly on the...
+● Bash(cd /tmp && npm view fluent-ffmpeg deprecated 2>&1 | head -3; npm view nanoid version type 2>&1 | head -3; npm view @nestjs/bullmq version peerDependencies 2>&1 | head -8; npm view bullmq version 2>&1|head -2; grep -n ...)
+  ⎿  Package no longer supported. Contact Support at https://www.npmjs.com/support for more info. version = '6.0.2' type = 'module' version = '12.0.0' peerDependencies = { bullmq: '^3.0.0 || ^4.0.0 || ^...
+● Write(/Users/dianaarcanjo/Projetos/DesafiosPos/mba-ia-greenfield-project/docs/decisions/technical-decisions-phase-03-videos.md)
+  ⎿  File created successfully at: /Users/dianaarcanjo/Projetos/DesafiosPos/mba-ia-greenfield-project/docs/decisions/technical-decisions-phase-03-videos.md (file state is current in your context — no ne...
+
+● Escrevi o documento de decisões da Fase 03 em `docs/decisions/technical-decisions-phase-03-videos.md`. Ele tem 8 decisões técnicas (TDs), todas ainda com `Decision: _[pending]_` para você preencher. Não rodei testes, `tsc` nem lint, porque só criei esse arquivo de documentação.
+
+Para a pesquisa, usei a documentação via context7 de BullMQ e `@nestjs/bullmq`, do AWS SDK v3 (presigner, multipart, `lib-storage`) e do `fluent-ffmpeg`. Para o `nanoid` só resolvi o id da lib no context7, sem ler a doc. Também conferi as versões com `npm view`.
+
+| TD | Escopo | Decisão | Recomendação |
+|---|---|---|---|
+| 01 | Backend | Tecnologia da fila | BullMQ + Redis. pg-boss fica como alternativa se você quiser evitar um serviço novo. |
+| 02 | Cross-layer | Upload de até 10GB | Multipart S3 com URLs pré-assinadas por parte. |
+| 03 | Cross-layer | Buckets e chaves | Um bucket privado, com chaves `videos/{uuid}/…`. |
+| 04 | Repo-wide | Runtime do worker | Mesma base NestJS, outro entrypoint e outro container. |
+| 05 | Backend | FFmpeg, metadados e thumbnail | Chamar `ffprobe`/`ffmpeg` direto sobre uma URL pré-assinada, com download para disco como fallback. |
+| 06 | Cross-layer | URL única | Id aleatório de 11 caracteres com constraint `UNIQUE`. |
+| 07 | Cross-layer | Streaming e download | O API devolve um redirect para uma URL pré-assinada; o storage responde 206. |
+| 08 | Backend | Ciclo de status e falhas | `processingStatus` separado da publicação, com retry e backoff, depois `FAILED` com motivo. |
+
+Pontos que valem sua atenção:
+- **Upload de 10GB:** um PUT pré-assinado simples ficou de fora, porque o S3 limita um PUT a 5GB.
+- **Endpoint do storage:** as URLs pré-assinadas precisam usar um endpoint acessível pelo navegador, diferente do `minio:9000` interno usado pelo API e pelo worker. Registrei isso na TD-02.
+- **`fluent-ffmpeg`:** o `npm view` retorna "Package no longer supported", então não o recomendo.
+- **`nanoid` v6:** é ESM-only e o backend usa `module: nodenext`, então a TD-06 sugere gerar o id com `crypto` se houver atrito.
+- **Frontend:** não tem TD próprio, porque a Fase 03 não lista telas. Ele entra só pelos contratos cross-layer (TD-02, 03, 06, 07), e isso está justificado no cabeçalho do documento.
+
+Próximo passo: preencha os campos **Decision** e rode `/plan-context phase-03-videos` (ou `/plan-context 03`). A ordem do pipeline continua `plan-context → plan-validate → plan-resolve`.
+

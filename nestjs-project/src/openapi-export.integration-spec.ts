@@ -128,4 +128,74 @@ describe('exportSpec (integration)', () => {
       }
     }
   });
+
+  describe('videos', () => {
+    type Operation = Record<string, unknown>;
+    const VIDEO_OPERATIONS: [string, string][] = [
+      ['post', '/videos'],
+      ['post', '/videos/{publicId}/upload/parts'],
+      ['get', '/videos/{publicId}/upload'],
+      ['post', '/videos/{publicId}/upload/complete'],
+      ['get', '/videos/{publicId}'],
+      ['get', '/videos/{publicId}/stream'],
+      ['get', '/videos/{publicId}/download'],
+      ['get', '/videos/{publicId}/thumbnail'],
+    ];
+
+    const operationOf = (method: string, path: string): Operation => {
+      const paths = document.paths as Record<string, Record<string, Operation>>;
+      return paths[path]?.[method];
+    };
+
+    it.each(VIDEO_OPERATIONS)('documents %s %s', (method, path) => {
+      expect(operationOf(method, path)).toBeDefined();
+    });
+
+    it.each(VIDEO_OPERATIONS)(
+      'tags %s %s as videos and requires access-token',
+      (method, path) => {
+        const operation = operationOf(method, path);
+        expect(operation.tags).toEqual(['videos']);
+        const security = operation.security as Array<Record<string, unknown>>;
+        expect(security.some((req) => 'access-token' in req)).toBe(true);
+      },
+    );
+
+    it.each(VIDEO_OPERATIONS)(
+      'references ApiErrorEnvelope in the error responses of %s %s',
+      (method, path) => {
+        const responses = operationOf(method, path).responses as Record<
+          string,
+          { content?: Record<string, { schema?: { $ref?: string } }> }
+        >;
+        const errorCodes = Object.keys(responses).filter(
+          (code) => Number(code) >= 400,
+        );
+        expect(errorCodes.length).toBeGreaterThan(0);
+        for (const code of errorCodes) {
+          const refs = Object.values(responses[code].content ?? {}).map(
+            (media) => media.schema?.$ref,
+          );
+          expect(refs).toContain('#/components/schemas/ApiErrorEnvelope');
+        }
+      },
+    );
+
+    it('exposes response schemas with real properties', () => {
+      const schemas = (document.components as Record<string, unknown>)
+        .schemas as Record<string, { properties?: Record<string, unknown> }>;
+      expect(Object.keys(schemas.VideoResponseDto.properties ?? {})).toEqual(
+        expect.arrayContaining([
+          'publicId',
+          'processingStatus',
+          'hasThumbnail',
+        ]),
+      );
+      expect(Object.keys(schemas.UploadSessionDto.properties ?? {})).toEqual([
+        'uploadId',
+        'partSize',
+        'partCount',
+      ]);
+    });
+  });
 });

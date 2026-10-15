@@ -1,0 +1,47 @@
+Claude Code — sessão edb6e20f-5d35-4768-a070-448e687b7e8a
+
+
+❯ <command-message>plan-test-specs</command-message>
+<command-name>/plan-test-specs</command-name>
+<command-args>phase-03-videos</command-args>
+
+  ⎿  (skill carregada: plan-test-specs)
+● Bash(P=docs/phases/phase-03-videos/phase-03-videos.md; ls -la $P; head -20 $P; grep -c "^test_specs_aware: true$" $P; grep -c "^\*\*Test Specs:\*\*" $P)
+  ⎿  -rw-r--r--@ 1 dianaarcanjo staff 76137 Oct 14 20:18 docs/phases/phase-03-videos/phase-03-videos.md --- kind: phase name: phase-03-videos test_specs_aware: true sources_mtime: docs/phases/phase-03-v...
+● Bash(P=docs/phases/phase-03-videos/phase-03-videos.md; grep -n "^### SI-\|^\*\*Test Specs:\*\*\|^\*\*Route:\*\*\|^\*\*Acceptance" $P | head -120; ls nestjs-project nestjs-project/specs nestjs-project/test 2>&1 | head -50)
+  ⎿  22:### SI-03.1 — Infra: MinIO, Redis, worker e FFmpeg no Docker Compose 40:**Acceptance criteria:** 51:### SI-03.2 — Dependências e namespaces de configuração (storage, fila, vídeo) 71:**Acceptance...
+● Read(/Users/dianaarcanjo/Projetos/DesafiosPos/mba-ia-greenfield-project/docs/phases/phase-03-videos/phase-03-videos.md)
+  ⎿  316 ### SI-03.11 — Endpoint POST /videos 317 318 **Route:** POST /videos 319 **Test Specs:** _pending /plan-test-specs_ 320 **Authorization:** Authenticated (cria o vídeo no canal do próprio usuári...
+● Skill(testing-guide-nestjs-project)
+  ⎿  Launching skill: testing-guide-nestjs-project
+  ⎿  (skill carregada: testing-guide-nestjs-project)
+● Bash(cd /Users/dianaarcanjo/Projetos/DesafiosPos/mba-ia-greenfield-project/.claude/skills/testing-guide-nestjs-project && grep -n -i "e2e" references/file-conventions.md | head -20; sed -n 1,40p ../../../nestjs-project/tes...)
+  ⎿  11:| **E2E** | `*.e2e-spec.ts` | `test/` directory | `test/jest-e2e.json` (rootDir: `.`, testRegex: `.e2e-spec.ts$`) | 31: users.e2e-spec.ts # E2E tests for /users 32: auth.e2e-spec.ts # E2E tests ...
+● Bash(cd /Users/dianaarcanjo/Projetos/DesafiosPos/mba-ia-greenfield-project/nestjs-project && mkdir -p specs && TS=$(date -u +%Y-%m-%dT%H:%M:%SZ) hdr(){ # file si feature title overview setup cat > specs/$1.plan.md <<EOF --...)
+  ⎿  Can't do inplace edit: /dev/null is not a regular file. Can't do inplace edit: /dev/null is not a regular file. Can't do inplace edit: /dev/null is not a regular file. Can't do inplace edit: /dev/n...
+● Bash(sleep 1 && touch nestjs-project/specs/*.plan.md && head -9 nestjs-project/specs/videos-get.plan.md)
+  ⎿  --- subproject: backend runner: jest+supertest scope: phase-03-videos si: SI-03.16 target_file: test/videos-get.e2e-spec.ts --- # GET /videos/:publicId Test Plan
+
+● Gerei 8 specs de teste e-2-e de backend para a fase 03 e atualizei os 8 campos `**Test Specs:**` do plano. Não executei nenhum teste: o skill só escreve specs.
+
+Os specs estão em `nestjs-project/specs/`, um por endpoint:
+
+| Spec | SI | Cenários |
+|---|---|---|
+| `videos-initiate-upload.plan.md` | SI-03.11 | 5 |
+| `videos-upload-parts.plan.md` | SI-03.12 | 6 |
+| `videos-upload-status.plan.md` | SI-03.13 | 5 |
+| `videos-upload-complete.plan.md` | SI-03.14 | 7 |
+| `videos-get.plan.md` | SI-03.16 | 5 |
+| `videos-stream.plan.md` | SI-03.17 | 5 |
+| `videos-download.plan.md` | SI-03.18 | 5 |
+| `videos-thumbnail.plan.md` | SI-03.19 | 4 |
+
+Cada cenário cobre um critério de aceitação do SI, e todos os critérios têm cenário. Todos são novos (`Source: auto`). Os campos `_pending_` do plano agora apontam para esses arquivos.
+
+Como o plano foi editado depois de criar os specs, rodei `touch` em todos. Sem isso o `/implement` abortaria como STALE.
+
+**Divergência com o SI-03.23:** ele prevê três arquivos de e2e agrupados (`videos-upload`, `videos-processing`, `videos-delivery`). Aqui o `target_file` de cada spec é um arquivo próprio, `test/videos-<feature>.e2e-spec.ts`, porque a regra é um spec para um arquivo de teste e um critério de cobertura por SI. Se preferir os três arquivos do SI-03.23, dá para consolidar os specs antes do `/implement`.
+
+Próximo passo: `/implement phase-03-videos`.
+

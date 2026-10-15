@@ -12,6 +12,25 @@ services:
         condition: service_healthy
       mailpit:
         condition: service_started
+      redis:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+
+  video-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: npm run start:worker:dev
+    volumes:
+      - .:/home/node/app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
 
   db:
     image: postgres:17
@@ -33,4 +52,57 @@ services:
       - "1025:1025"
       - "8025:8025"
 
+  minio:
+    image: cgr.dev/chainguard/minio:latest
+    command: ["server", "/data", "--console-address", ":9001"]
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-streamtube}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-streamtube-secret}
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test:
+        - CMD
+        - bash
+        - -c
+        - 'exec 3<>/dev/tcp/127.0.0.1/9000 && printf "GET /minio/health/live HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n" >&3 && read -r status <&3 && [[ $$status == *" 200 "* ]]'
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
+  minio-init:
+    image: cgr.dev/chainguard/minio-client:latest
+    restart: "no"
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-streamtube}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-streamtube-secret}
+    entrypoint:
+      - /usr/bin/bash
+      - -c
+      - |
+        set -e
+        mc alias set local http://minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD"
+        mc mb --ignore-existing local/streamtube-videos
+        # MinIO does not support the AbortIncompleteMultipartUpload lifecycle action
+        # (PutBucketLifecycle rejects it); its native equivalent is the stale
+        # multipart uploads sweeper, pinned here to 24h expiry / 6h interval.
+        mc admin config set local api stale_uploads_expiry=24h stale_uploads_cleanup_interval=6h
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  minio-data:

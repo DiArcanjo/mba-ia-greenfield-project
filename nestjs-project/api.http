@@ -118,3 +118,86 @@ Content-Type: {{contentType}}
   "token": "{{resetToken}}",
   "new_password": "new-password123"
 }
+
+
+###
+# ─────────────────────────────────────────────
+# VÍDEOS (upload multipart direto ao storage)
+# ─────────────────────────────────────────────
+# Fluxo: iniciar → pedir URLs das partes → enviar cada parte ao storage (PUT) →
+# (opcional) consultar partes enviadas → completar → acompanhar o processamento.
+# Requer o login acima (@accessToken) e o serviço video-worker no ar.
+
+@publicId = {{startUpload.response.body.$.publicId}}
+
+### 10. Iniciar upload — cria o rascunho e abre o multipart
+# partCount = ceil(size / partSize); a resposta traz upload.partSize e upload.partCount
+# @name startUpload
+POST {{baseUrl}}/videos
+Authorization: Bearer {{accessToken}}
+Content-Type: {{contentType}}
+
+{
+  "filename": "aula.mp4",
+  "contentType": "video/mp4",
+  "size": 12582912
+}
+
+
+### 11. Pedir URLs pré-assinadas (PUT) das partes
+POST {{baseUrl}}/videos/{{publicId}}/upload/parts
+Authorization: Bearer {{accessToken}}
+Content-Type: {{contentType}}
+
+{
+  "partNumbers": [1]
+}
+
+
+### 12. Enviar a parte direto ao storage (PUT na URL pré-assinada)
+# Cole a URL devolvida no passo 11 (campo parts[].url) e envie os bytes da parte.
+# Leia o header ETag da resposta (ex.: "9b2cf535f27731c974343645a3985328"):
+# ele é obrigatório no passo 14, junto do partNumber. Esta chamada NÃO leva
+# Authorization — a assinatura está na própria URL.
+PUT <url pré-assinada da parte 1>
+Content-Type: application/octet-stream
+
+< ./aula-parte-1.bin
+
+
+### 13. Consultar partes já recebidas (retomada de upload interrompido)
+GET {{baseUrl}}/videos/{{publicId}}/upload
+Authorization: Bearer {{accessToken}}
+
+
+### 14. Completar o upload — verifica o tamanho, vai para "processing" e enfileira
+# Informe todas as partes com o ETag lido no passo 12. Idempotente.
+POST {{baseUrl}}/videos/{{publicId}}/upload/complete
+Authorization: Bearer {{accessToken}}
+Content-Type: {{contentType}}
+
+{
+  "parts": [
+    { "partNumber": 1, "etag": "\"<etag da parte 1>\"" }
+  ]
+}
+
+
+### 15. Consultar o vídeo — repita até processingStatus ser "ready" ou "failed"
+GET {{baseUrl}}/videos/{{publicId}}
+Authorization: Bearer {{accessToken}}
+
+
+### 16. Stream — 302 para a URL do storage (aceita Range → 206)
+GET {{baseUrl}}/videos/{{publicId}}/stream
+Authorization: Bearer {{accessToken}}
+
+
+### 17. Download — 302 para a URL do storage com Content-Disposition: attachment
+GET {{baseUrl}}/videos/{{publicId}}/download
+Authorization: Bearer {{accessToken}}
+
+
+### 18. Thumbnail — 302 para a imagem JPEG gerada pelo worker
+GET {{baseUrl}}/videos/{{publicId}}/thumbnail
+Authorization: Bearer {{accessToken}}
