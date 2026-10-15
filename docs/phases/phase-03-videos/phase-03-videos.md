@@ -1038,35 +1038,35 @@ Ordem linearizada: SI-03.1, SI-03.2, SI-03.4, SI-03.5, SI-03.6 (raízes, em para
 
 ## Deliverables
 
-- [ ] SI-03.1 — Infra: MinIO, Redis, worker e FFmpeg no Docker Compose
-- [ ] SI-03.2 — Dependências e namespaces de configuração (storage, fila, vídeo)
-- [ ] SI-03.3 — StorageModule: cliente S3/MinIO e operações de objeto
-- [ ] SI-03.4 — Entidade Video, migration e VideosModule base
-- [ ] SI-03.5 — Gerador de id público do vídeo
-- [ ] SI-03.6 — Exceções de domínio de vídeo e busca de canal por usuário
-- [ ] SI-03.7 — QueueModule e producer da fila de processamento
-- [ ] SI-03.8 — VideosService: posse, transições de status e DTO de resposta
-- [ ] SI-03.9 — Início do upload: pré-cadastro do rascunho e sessão multipart
-- [ ] SI-03.10 — Handshake de upload: URLs de partes, retomada e conclusão
-- [ ] SI-03.11 — Endpoint POST /videos
-- [ ] SI-03.12 — Endpoint POST /videos/:publicId/upload/parts
-- [ ] SI-03.13 — Endpoint GET /videos/:publicId/upload
-- [ ] SI-03.14 — Endpoint POST /videos/:publicId/upload/complete
-- [ ] SI-03.15 — VideoDeliveryService: URLs de streaming, download e thumbnail
-- [ ] SI-03.16 — Endpoint GET /videos/:publicId
-- [ ] SI-03.17 — Endpoint GET /videos/:publicId/stream
-- [ ] SI-03.18 — Endpoint GET /videos/:publicId/download
-- [ ] SI-03.19 — Endpoint GET /videos/:publicId/thumbnail
-- [ ] SI-03.20 — MediaModule: ffprobe e ffmpeg sobre URL pré-assinada
-- [ ] SI-03.21 — VideoProcessingService: metadados e thumbnail
-- [ ] SI-03.22 — Worker de vídeo: processor BullMQ, retry/falha e entrypoint separado
-- [ ] SI-03.23 — E2E ponta a ponta com a infraestrutura real do Compose
-- [ ] SI-03.24 — Contrato OpenAPI e coleção de requests de vídeos
+- [x] SI-03.1 — Infra: MinIO, Redis, worker e FFmpeg no Docker Compose
+- [x] SI-03.2 — Dependências e namespaces de configuração (storage, fila, vídeo)
+- [x] SI-03.3 — StorageModule: cliente S3/MinIO e operações de objeto
+- [x] SI-03.4 — Entidade Video, migration e VideosModule base
+- [x] SI-03.5 — Gerador de id público do vídeo
+- [x] SI-03.6 — Exceções de domínio de vídeo e busca de canal por usuário
+- [x] SI-03.7 — QueueModule e producer da fila de processamento
+- [x] SI-03.8 — VideosService: posse, transições de status e DTO de resposta
+- [x] SI-03.9 — Início do upload: pré-cadastro do rascunho e sessão multipart
+- [x] SI-03.10 — Handshake de upload: URLs de partes, retomada e conclusão
+- [x] SI-03.11 — Endpoint POST /videos
+- [x] SI-03.12 — Endpoint POST /videos/:publicId/upload/parts
+- [x] SI-03.13 — Endpoint GET /videos/:publicId/upload
+- [x] SI-03.14 — Endpoint POST /videos/:publicId/upload/complete
+- [x] SI-03.15 — VideoDeliveryService: URLs de streaming, download e thumbnail
+- [x] SI-03.16 — Endpoint GET /videos/:publicId
+- [x] SI-03.17 — Endpoint GET /videos/:publicId/stream
+- [x] SI-03.18 — Endpoint GET /videos/:publicId/download
+- [x] SI-03.19 — Endpoint GET /videos/:publicId/thumbnail
+- [x] SI-03.20 — MediaModule: ffprobe e ffmpeg sobre URL pré-assinada
+- [x] SI-03.21 — VideoProcessingService: metadados e thumbnail
+- [x] SI-03.22 — Worker de vídeo: processor BullMQ, retry/falha e entrypoint separado
+- [x] SI-03.23 — E2E ponta a ponta com a infraestrutura real do Compose
+- [x] SI-03.24 — Contrato OpenAPI e coleção de requests de vídeos
 
 **Full test suites** _(requerem `docker compose up -d` com `db`, `minio`, `minio-init`, `redis`, `mailpit` e `video-worker` saudáveis)_:
 
-- [ ] Backend tests pass (`docker compose exec nestjs-api npm test -- --runInBand`)
-- [ ] E2E tests pass (`docker compose exec nestjs-api npm run test:e2e`)
-- [ ] Type/compilation checks pass (`docker compose exec nestjs-api npx tsc --noEmit`)
-- [ ] Lint passes (`docker compose exec nestjs-api npm run lint`)
-- [ ] Project builds successfully (`docker compose exec nestjs-api npm run build`) — gera `dist/main` e `dist/worker`
+- [x] Backend tests pass (`docker compose exec nestjs-api npm test -- --runInBand`)
+- [x] E2E tests pass (`docker compose exec nestjs-api npm run test:e2e`)
+- [x] Type/compilation checks pass (`docker compose exec nestjs-api npx tsc --noEmit`)
+- [x] Lint passes (`docker compose exec nestjs-api npm run lint`)
+- [x] Project builds successfully (`docker compose exec nestjs-api npm run build`) — gera `dist/main` e `dist/worker`
