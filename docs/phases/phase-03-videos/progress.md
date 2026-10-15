@@ -1,7 +1,7 @@
 # phase-03-videos — Progress
 
 **Status:** in_progress
-**SIs:** 23/24 completed
+**SIs:** 24/24 completed
 
 ### SI-03.1 — Infra: MinIO, Redis, worker e FFmpeg no Docker Compose
 - **Status:** completed
@@ -152,7 +152,8 @@
   - nestjs-project/CLAUDE.md now states the e2e suite needs the compose video-worker up.
 
 ### SI-03.24 — Contrato OpenAPI e coleção de requests de vídeos
-- **Status:** pending
-- **Tests:** -
-- **Observations:** none
+- **Status:** completed
+- **Tests:** 34 passing in src/openapi-export.integration-spec.ts (+ new videos assertions: 8 operations, tag, access-token security, ApiErrorEnvelope on every error response, real response schema properties); full unit/integration suite and e2e green; tsc clean; lint 0 errors; re-running openapi:export yields no extra diff
+- **Observations:**
+  - openapi:export runs through ts-node without the Swagger CLI plugin, so DTO schemas that rely on the plugin (all request DTOs, old and new) export as empty objects; the 6 video response DTOs now carry explicit @ApiProperty (per .claude/rules/nestjs-dtos.md) so the contract is useful. Request DTOs InitiateUploadDto/PresignPartsDto/CompleteUploadDto still export empty schemas like the existing auth DTOs: a pre-existing limitation of the export path, suggested as a separate follow-up.
 

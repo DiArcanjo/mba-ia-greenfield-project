@@ -1,19 +1,45 @@
+import { ApiProperty } from '@nestjs/swagger';
 import type { Video } from '../entities/video.entity';
-import type { ProcessingStatus, PublicationStatus } from '../video.types';
+import { ProcessingStatus, PublicationStatus } from '../video.types';
 
 export class VideoResponseDto {
+  @ApiProperty({ example: 'aB3_xYz-k9Q', description: '11-character URL id' })
   publicId: string;
+
+  @ApiProperty()
   title: string;
+
+  @ApiProperty({ enum: ProcessingStatus, enumName: 'ProcessingStatus' })
   processingStatus: ProcessingStatus;
+
+  @ApiProperty({ enum: PublicationStatus, enumName: 'PublicationStatus' })
   publicationStatus: PublicationStatus;
+
+  @ApiProperty({ type: String, nullable: true })
   failureReason: string | null;
+
+  @ApiProperty({ type: 'integer', description: 'Original file size in bytes' })
   sizeBytes: number;
+
+  @ApiProperty({ type: Number, nullable: true })
   durationSeconds: number | null;
+
+  @ApiProperty({ type: 'integer', nullable: true })
   width: number | null;
+
+  @ApiProperty({ type: 'integer', nullable: true })
   height: number | null;
+
+  @ApiProperty({ type: String, nullable: true })
   videoCodec: string | null;
+
+  @ApiProperty({ type: String, nullable: true })
   formatName: string | null;
+
+  @ApiProperty()
   hasThumbnail: boolean;
+
+  @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
 
   static from(video: Video): VideoResponseDto {
