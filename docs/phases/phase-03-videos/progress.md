@@ -1,7 +1,7 @@
 # phase-03-videos — Progress
 
 **Status:** in_progress
-**SIs:** 21/24 completed
+**SIs:** 22/24 completed
 
 ### SI-03.1 — Infra: MinIO, Redis, worker e FFmpeg no Docker Compose
 - **Status:** completed
@@ -120,8 +120,8 @@
 - **Observations:** none
 
 ### SI-03.19 — Endpoint GET /videos/:publicId/thumbnail
-- **Status:** pending
-- **Tests:** -
+- **Status:** completed
+- **Tests:** 4 e2e passing (test/videos-thumbnail.e2e-spec.ts); unit suite 266 passing, e2e 92 passing; tsc clean; lint 0 errors
 - **Observations:** none
 
 ### SI-03.20 — MediaModule: ffprobe e ffmpeg sobre URL pré-assinada
