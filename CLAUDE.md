@@ -20,10 +20,10 @@ See `docs/diagrams/software-arch.mermaid` for the full diagram. Key containers:
 
 - **Frontend** (Next.js) → calls API via REST, streams from Object Storage
 - **API** (Nest.js) → business rules, auth, reads/writes DB, uploads to storage, publishes jobs to queue, sends emails
-- **Video Worker** (FFmpeg) → consumes jobs from queue, processes videos, updates DB and storage
+- **Video Worker** (FFmpeg) → separate process of the same NestJS codebase (`nestjs-project/src/worker.ts`); consumes BullMQ jobs from the queue, probes videos and generates thumbnails with FFmpeg, updates DB and storage
 - **Database** (PostgreSQL) → users, channels, videos, comments, likes
-- **Object Storage** (S3/MinIO) → video files and thumbnails
-- **Message Queue** (TBD) → video processing job queue
+- **Object Storage** (MinIO locally, Chainguard image `cgr.dev/chainguard/minio`, since MinIO no longer publishes public images; any S3-compatible service in production) → video files and thumbnails; clients upload parts directly via presigned URLs
+- **Message Queue** (BullMQ on Redis 7) → video processing job queue
 - **Email Service** (SMTP) → account confirmation and password recovery
 
 ## Docker Networking
