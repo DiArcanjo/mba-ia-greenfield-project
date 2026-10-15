@@ -24,3 +24,7 @@ export const INVALID_MEDIA_PATTERNS = [
   // Random bytes can be sniffed as MP3 and fail inside the demuxer.
   'Failed to read frame size',
 ] as const;
+
+/** Matches any URL; presigned input URLs carry credentials in the query string. */
+export const URL_PATTERN = /https?:\/\/[^\s'"]+/g;
+export const URL_PLACEHOLDER = '<input>';

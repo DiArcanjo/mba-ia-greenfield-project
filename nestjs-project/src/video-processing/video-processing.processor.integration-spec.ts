@@ -186,6 +186,8 @@ describe('VideoProcessingProcessor (integration, Redis + PostgreSQL + MinIO + ff
 
     expect(done.processing_status).toBe(ProcessingStatus.FAILED);
     expect(done.failure_reason).toBeTruthy();
+    expect(done.failure_reason).not.toContain('X-Amz-');
+    expect(done.failure_reason).not.toMatch(/https?:\/\//);
     expect(probe).toHaveBeenCalledTimes(1);
   });
 });

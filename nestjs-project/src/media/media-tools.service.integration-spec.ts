@@ -83,5 +83,8 @@ describe('MediaToolsService (integration, ffmpeg + MinIO)', () => {
 
     expect(error).toBeInstanceOf(MediaProcessingError);
     expect((error as MediaProcessingError).retryable).toBe(true);
+    const message = (error as MediaProcessingError).message;
+    expect(message).not.toContain('X-Amz-Signature');
+    expect(message).not.toContain(missingUrl);
   });
 });

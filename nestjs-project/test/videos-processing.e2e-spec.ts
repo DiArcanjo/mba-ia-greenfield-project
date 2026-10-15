@@ -87,6 +87,9 @@ describe('Video processing pipeline (e2e, real worker)', () => {
     expect(video.processingStatus).toBe('failed');
     expect(typeof video.failureReason).toBe('string');
     expect((video.failureReason as string).length).toBeGreaterThan(0);
+    // The presigned input URL (with its signature) must never reach the API.
+    expect(video.failureReason).not.toContain('X-Amz-');
+    expect(video.failureReason).not.toMatch(/https?:\/\//);
     expect(video.hasThumbnail).toBe(false);
   }, 90_000);
 });

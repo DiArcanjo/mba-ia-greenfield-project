@@ -9,6 +9,8 @@ import {
   INVALID_MEDIA_PATTERNS,
   MAX_STDERR_LENGTH,
   THUMBNAIL_WIDTH,
+  URL_PATTERN,
+  URL_PLACEHOLDER,
 } from './media.constants';
 import { MediaProcessingError, type MediaMetadata } from './media.types';
 
@@ -22,6 +24,11 @@ interface ProbeStream {
 interface ProbeOutput {
   streams?: ProbeStream[];
   format?: { duration?: string; format_name?: string };
+}
+
+/** Strips URLs (presigned ones embed X-Amz-Signature/Credential) from tool output. */
+function sanitize(text: string): string {
+  return text.replace(URL_PATTERN, URL_PLACEHOLDER);
 }
 
 interface ToolResult {
@@ -123,7 +130,7 @@ export class MediaToolsService {
         finish(() =>
           reject(
             new MediaProcessingError(
-              `Failed to run ${bin}: ${err.message}`,
+              `Failed to run ${bin}: ${sanitize(err.message)}`,
               true,
             ),
           ),
@@ -136,7 +143,7 @@ export class MediaToolsService {
             resolve({ stdout: Buffer.concat(stdout), stderr });
             return;
           }
-          const detail = stderr.trim().slice(0, MAX_STDERR_LENGTH);
+          const detail = sanitize(stderr.trim()).slice(0, MAX_STDERR_LENGTH);
           const invalid = INVALID_MEDIA_PATTERNS.some((p) =>
             detail.includes(p),
           );
