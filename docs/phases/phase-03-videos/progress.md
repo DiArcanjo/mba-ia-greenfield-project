@@ -1,6 +1,6 @@
 # phase-03-videos — Progress
 
-**Status:** in_progress
+**Status:** completed
 **SIs:** 24/24 completed
 
 ### SI-03.1 — Infra: MinIO, Redis, worker e FFmpeg no Docker Compose
